@@ -46,7 +46,9 @@
 | Session Key | `agent:main:subagent:5ad31c7b-78b5-4467-b95c-f7b9acf55a38` | | | |
 | fe-ui-01 | M1-UI | Kimi | Isolado | ✅ Concluída |
 | Session Key | `agent:main:subagent:7789d4c4-0124-4c96-8610-dd6ba902494b` | | | |
-| fe-save-01 | M1-SAVE | Kimi | Isolado | 🟡 Executando |
+| fe-save-01 | M1-SAVE | Kimi | Isolado | ✅ Concluída |
+| Session Key | `agent:main:subagent:d1a1e37e-a959-4237-98e1-ddef513138d4` | | | |
+| qa-01 | M1-QA | Kimi | Isolado | 🟡 Executando |
 | Session Key | `agent:main:subagent:d1a1e37e-a959-4237-98e1-ddef513138d4` | | | |
 | Session Key | `agent:main:subagent:7789d4c4-0124-4c96-8610-dd6ba902494b` | | | |
 | Session Key | `agent:main:subagent:5ad31c7b-78b5-4467-b95c-f7b9acf55a38` | | | |
