@@ -9,11 +9,13 @@ import '../entities/npcs/cidadao_parque.dart';
 import '../entities/npcs/npc_base.dart';
 import '../entities/player/player.dart';
 import '../locations/buildings/centro/casa_jogador.dart';
+import '../locations/buildings/centro/mercadao.dart';
 import '../locations/buildings/centro/parque_central.dart';
 import '../locations/location_manager.dart';
 import '../ui/dialogs/npc_dialogue.dart';
 
 import 'interior_scene.dart';
+import 'mercadao_interior_scene.dart';
 
 /// FlameGame principal do Mundinho Divertido.
 ///
@@ -44,6 +46,15 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   bool _nearParque = false;
   late TextComponent _parqueHint;
   bool _parqueHintAdded = false;
+
+  // Mercadão
+  late MercadaoExterior _mercadaoExterior;
+  final Vector2 _mercadaoPosition = Vector2(900, 300);
+  static const double _mercadaoEnterDistance = 100.0;
+  bool _nearMercadao = false;
+  late TextComponent _mercadaoHint;
+  bool _mercadaoHintAdded = false;
+  MercadaoInteriorScene? _mercadaoInteriorScene;
 
   // NPC
   late CidadaoParque _cidadao;
@@ -101,6 +112,10 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     );
     await world.add(_parqueArea);
 
+    // Adicionar Mercadão ao mundo
+    _mercadaoExterior = MercadaoExterior(position: _mercadaoPosition);
+    await world.add(_mercadaoExterior);
+
     // Adicionar NPC ao parque
     _cidadao = CidadaoParque(
       position: _parquePosition + Vector2(_parqueSize.x / 2, _parqueSize.y / 2),
@@ -139,6 +154,23 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
         style: const TextStyle(
           color: Colors.white,
           fontSize: 14,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(color: Colors.black87, blurRadius: 4),
+          ],
+        ),
+      ),
+    );
+
+    // Dica do Mercadão
+    _mercadaoHint = TextComponent(
+      text: 'Entrar',
+      position: _mercadaoPosition + Vector2(0, -80),
+      anchor: Anchor.center,
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
           shadows: [
             Shadow(color: Colors.black87, blurRadius: 4),
@@ -192,6 +224,18 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     } else if (!_nearParque && _parqueHintAdded) {
       _parqueHint.removeFromParent();
       _parqueHintAdded = false;
+    }
+
+    // Detectar proximidade com mercadão
+    final distMercadao = _player.position.distanceTo(_mercadaoPosition);
+    _nearMercadao = distMercadao < _mercadaoEnterDistance;
+
+    if (_nearMercadao && !_mercadaoHintAdded) {
+      world.add(_mercadaoHint);
+      _mercadaoHintAdded = true;
+    } else if (!_nearMercadao && _mercadaoHintAdded) {
+      _mercadaoHint.removeFromParent();
+      _mercadaoHintAdded = false;
     }
 
     // Player sitting animation
@@ -249,6 +293,19 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       );
       if (casaRect.contains(Offset(worldPos.x, worldPos.y))) {
         _enterInterior();
+        return;
+      }
+    }
+
+    // Verificar toque no mercadão quando próximo
+    if (_nearMercadao) {
+      final mercadaoRect = Rect.fromCenter(
+        center: Offset(_mercadaoPosition.x, _mercadaoPosition.y),
+        width: _mercadaoExterior.size.x,
+        height: _mercadaoExterior.size.y,
+      );
+      if (mercadaoRect.contains(Offset(worldPos.x, worldPos.y))) {
+        _enterMercadaoInterior();
         return;
       }
     }
@@ -325,20 +382,25 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     _cidadao.estado = NpcState.idle;
   }
 
-  /// Transiciona para o interior da Casa do Jogador.
-  void _enterInterior() {
-    _inInterior = true;
-
-    // Remove dica se estiver visível
+  void _removeAllHints() {
     if (_hintAdded) {
       _enterHint.removeFromParent();
       _hintAdded = false;
     }
-
     if (_parqueHintAdded) {
       _parqueHint.removeFromParent();
       _parqueHintAdded = false;
     }
+    if (_mercadaoHintAdded) {
+      _mercadaoHint.removeFromParent();
+      _mercadaoHintAdded = false;
+    }
+  }
+
+  /// Transiciona para o interior da Casa do Jogador.
+  void _enterInterior() {
+    _inInterior = true;
+    _removeAllHints();
 
     // Notifica o LocationManager
     LocationManager().enter('casa_jogador');
@@ -365,6 +427,35 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     // Reposiciona jogador em frente à casa
     _player.position = _casaPosition + Vector2(0, 100);
+    _player.moveTo(_player.position);
+  }
+
+  /// Transiciona para o interior do Mercadão.
+  void _enterMercadaoInterior() {
+    _inInterior = true;
+    _removeAllHints();
+
+    LocationManager().enter('mercadao');
+
+    _mercadaoInteriorScene = MercadaoInteriorScene(
+      size: camera.viewport.size,
+      onExit: _exitMercadaoInterior,
+    );
+    camera.viewport.add(_mercadaoInteriorScene!);
+    _mercadaoInteriorScene!.enter();
+  }
+
+  /// Sai do interior do Mercadão e volta ao mundo.
+  void _exitMercadaoInterior() {
+    if (_mercadaoInteriorScene == null) return;
+
+    camera.viewport.remove(_mercadaoInteriorScene!);
+    _mercadaoInteriorScene = null;
+    _inInterior = false;
+
+    LocationManager().exit('mercadao');
+
+    _player.position = _mercadaoPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
   }
 

@@ -1,8 +1,10 @@
 import 'locations/buildings/centro/casa_jogador.dart';
+import 'locations/buildings/centro/mercadao.dart';
 import 'locations/buildings/centro/parque_central.dart';
 import 'locations/buildings/centro/padaria.dart';
 import 'locations/buildings/centro/prefeitura.dart';
 import 'locations/location_manager.dart';
+import 'minigames/games/memory/lista_compras.dart';
 import 'minigames/games/puzzle/organizar_cidade.dart';
 import 'minigames/minigame_manager.dart';
 import 'missions/definitions/arc1/m1_bolo_vovo_maria.dart';
@@ -17,16 +19,20 @@ void registerAllContent() {
     ..register(CasaJogador())
     ..register(ParqueCentral())
     ..register(Prefeitura())
-    ..register(Padaria());
+    ..register(Padaria())
+    ..register(Mercadao());
 
   // ─── Mini-jogos ───
   MiniGameManager()
     ..register(
       'organizar_cidade',
       () => OrganizarCidadeMiniGame(),
+    )
+    ..register(
+      'lista_compras',
+      () => ListaComprasMiniGame(),
     );
 
   // ─── Missões ───
-  MissionManager()
-    ..register(MBoloVovoMaria());
+  MissionManager().register(MBoloVovoMaria());
 }
