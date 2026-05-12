@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
@@ -192,22 +193,20 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   Future<void> onLoad() async {
     await super.onLoad();
 
-    // Configurar câmera para seguir o jogador
-    camera.viewfinder.anchor = Anchor.topLeft;
+    try {
+      // Adicionar mundo
+      await world.add(_buildWorld());
 
-    // Adicionar mundo
-    await world.add(_buildWorld());
+      // Criar jogador
+      _player = Player(position: Vector2(_worldSize.x / 2, _worldSize.y / 2));
+      await world.add(_player);
 
-    // Criar jogador
-    _player = Player(position: Vector2(_worldSize.x / 2, _worldSize.y / 2));
-    await world.add(_player);
+      // Câmera segue o jogador (configuração padrão Flame 1.x)
+      camera.follow(_player);
 
-    // Câmera segue o jogador
-    camera.follow(_player);
-
-    // Adicionar Casa do Jogador ao mundo
-    _casaExterior = CasaJogadorExterior(position: _casaPosition);
-    await world.add(_casaExterior);
+      // Adicionar Casa do Jogador ao mundo
+      _casaExterior = CasaJogadorExterior(position: _casaPosition);
+      await world.add(_casaExterior);
 
     // Adicionar Parque Central ao mundo
     _parqueArea = ParqueCentralArea(
@@ -421,7 +420,7 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     // Converter IDs de inventário salvo para InventoryItem
     _syncInventoryFromSave();
 
-    // Inicializar HUD
+    // Inicializar HUD (com tamanho seguro)
     _initHud();
 
     // Iniciar auto-save a cada 30s
@@ -429,6 +428,9 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     // Áudio ambiente
     AudioService().playMusic('ambient');
+    } catch (e, stack) {
+      developer.log('CRITICAL onLoad error: $e\n$stack');
+    }
   }
 
   @override
@@ -587,7 +589,11 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       return;
     }
 
-    final worldPos = camera.globalToLocal(event.canvasPosition);
+    // Converter coordenadas do toque na tela para coordenadas do mundo.
+    // O centro da tela corresponde à posição do jogador (câmera o segue).
+    final viewportCenter = camera.viewport.size / 2;
+    final touchOffset = event.canvasPosition - viewportCenter;
+    final worldPos = _player.position + touchOffset;
 
     // Verificar toque na casa quando próximo
     if (_nearCasa) {
@@ -1283,22 +1289,33 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   }
 
   void _initHud() {
-    _mainHud = MainHud(
-      size: camera.viewport.size,
-      playerName: _playerData.playerName,
-      coins: _playerData.coins,
-      stars: _playerData.stars,
-      onPausePressed: _openPauseMenu,
-      onInventoryPressed: _openInventory,
-      onMissionsPressed: _toggleMissionHud,
-    );
-    camera.viewport.add(_mainHud!);
+    try {
+      // Garantir tamanho mínimo do viewport
+      var hudSize = camera.viewport.size;
+      if (hudSize.x <= 0 || hudSize.y <= 0) {
+        hudSize = Vector2(800, 600);
+      }
 
-    // Toast component
-    _toastComponent = ToastOverlayComponent(
-      toasts: _toasts,
-    );
-    camera.viewport.add(_toastComponent!);
+      _mainHud = MainHud(
+        size: hudSize,
+        playerName: _playerData.playerName,
+        coins: _playerData.coins,
+        stars: _playerData.stars,
+        onPausePressed: _openPauseMenu,
+        onInventoryPressed: _openInventory,
+        onMissionsPressed: _toggleMissionHud,
+      );
+      camera.viewport.add(_mainHud!);
+
+      // Toast component
+      _toastComponent = ToastOverlayComponent(
+        toasts: _toasts,
+      );
+      camera.viewport.add(_toastComponent!);
+    } catch (e) {
+      // HUD não crítico — continua sem ele
+      developer.log('HUD init error: $e');
+    }
   }
 
   void _openPauseMenu() {

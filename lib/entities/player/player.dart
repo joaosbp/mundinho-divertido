@@ -2,7 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
 /// Personagem jogável.
-class Player extends SpriteComponent with HasGameReference {
+class Player extends PositionComponent with HasGameReference {
   static const double _speed = 200.0;
 
   Vector2? _targetPosition;
@@ -13,15 +13,6 @@ class Player extends SpriteComponent with HasGameReference {
           size: Vector2.all(48),
           anchor: Anchor.center,
         );
-
-  @override
-  Future<void> onLoad() async {
-    await super.onLoad();
-
-    // Placeholder: círculo colorido como sprite temporário
-    // TODO: substituir por sprite real quando disponível
-    sprite = await Sprite.load('player_placeholder.png');
-  }
 
   @override
   void render(Canvas canvas) {
