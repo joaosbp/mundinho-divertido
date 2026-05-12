@@ -56,4 +56,26 @@ class LocationManager {
     final location = _locations[locationId];
     location?.onPlayerExit();
   }
+
+  /// Retorna um local próximo às coordenadas informadas.
+  /// Requer um mapa de posições associadas aos IDs dos locais.
+  LocationBase? getNearbyLocation(
+    double x,
+    double y, {
+    double threshold = 100.0,
+    Map<String, (double, double)>? positions,
+  }) {
+    if (positions == null) return null;
+    final thresholdSq = threshold * threshold;
+    for (final entry in positions.entries) {
+      if (!_locations.containsKey(entry.key)) continue;
+      final (lx, ly) = entry.value;
+      final dx = x - lx;
+      final dy = y - ly;
+      if (dx * dx + dy * dy <= thresholdSq) {
+        return _locations[entry.key];
+      }
+    }
+    return null;
+  }
 }
