@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flame/game.dart';
 
-import '../game/mundinho_game.dart';
+import '../engine/mundinho_game.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
