@@ -28,10 +28,10 @@
 
 | Subagente | Missão | Modelo | Runtime | Status |
 |-----------|--------|--------|---------|--------|
-| fe-casa-02 | M1-CASA | Kimi | Isolado | 🟡 Executando |
+| fe-casa-02 | M1-CASA | Kimi | Isolado | ✅ Concluída |
 | Session Key | `agent:main:subagent:f8113692-6df3-4cb4-9a1c-df0d3949e076` | | | |
 
-**Nota:** fe-casa-01 foi abortado (diretório errado). fe-casa-02 reiniciado com instruções explícitas de diretório.
+**Nota:** fe-casa-01 foi abortado (diretório errado). fe-casa-02 concluído com sucesso.
 
 ---
 
