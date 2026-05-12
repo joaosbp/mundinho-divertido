@@ -32,7 +32,9 @@
 | Session Key | `agent:main:subagent:f8113692-6df3-4cb4-9a1c-df0d3949e076` | | | |
 | fe-parque-01 | M1-PARQUE | Kimi | Isolado | ✅ Concluída |
 | Session Key | `agent:main:subagent:ba9f3079-9b3f-4037-891a-5185ab1f6c35` | | | |
-| fe-mercado-01 | M1-MERCADO | Kimi | Isolado | 🟡 Executando |
+| fe-mercado-01 | M1-MERCADO | Kimi | Isolado | ✅ Concluída |
+| Session Key | `agent:main:subagent:7a12dc2e-2a30-4e4a-aa2c-42fa0c324f52` | | | |
+| fe-padaria-01 | M1-PADARIA | Kimi | Isolado | 🟡 Executando |
 | Session Key | `agent:main:subagent:7a12dc2e-2a30-4e4a-aa2c-42fa0c324f52` | | | |
 
 **Nota:** fe-casa-01 foi abortado (diretório errado). Todos os outros concluídos com sucesso.
