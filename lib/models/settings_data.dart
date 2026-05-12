@@ -1,7 +1,5 @@
 import 'package:hive/hive.dart';
 
-part 'settings_data.g.dart';
-
 /// Configurações do jogador.
 @HiveType(typeId: 1)
 class SettingsData extends HiveObject {

@@ -56,6 +56,23 @@ class AudioService {
     }
   }
 
+  void pauseMusic() {
+    try {
+      FlameAudio.bgm.pause();
+    } catch (e) {
+      developer.log('Pause music error: $e');
+    }
+  }
+
+  void resumeMusic() {
+    if (!_musicOn || !_initialized) return;
+    try {
+      FlameAudio.bgm.resume();
+    } catch (e) {
+      developer.log('Resume music error: $e');
+    }
+  }
+
   void stopMusic() {
     try {
       FlameAudio.bgm.stop();

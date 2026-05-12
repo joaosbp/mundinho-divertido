@@ -1,7 +1,5 @@
 import 'package:hive/hive.dart';
 
-part 'player_data.g.dart'; // gerado via build_runner
-
 /// Dados salvos do jogador.
 @HiveType(typeId: 0)
 class PlayerData extends HiveObject {

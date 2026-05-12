@@ -22,6 +22,11 @@ import '../missions/definitions/arc1/t1_bem_vindo.dart';
 import '../missions/mission_base.dart';
 import '../missions/mission_manager.dart';
 import '../ui/dialogs/npc_dialogue.dart';
+import '../ui/hud/main_hud.dart';
+import '../ui/overlays/inventory_overlay.dart';
+import '../ui/overlays/pause_menu.dart';
+import '../ui/overlays/settings_overlay.dart';
+import '../ui/overlays/toast_overlay.dart';
 
 import 'correios_interior_scene.dart';
 import 'escola_interior_scene.dart';
@@ -133,6 +138,23 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   late TextComponent _missionHud;
   bool _missionHudAdded = false;
 
+  // ─── UI Overlays ───
+  bool _isPaused = false;
+  bool _showSettings = false;
+  bool _showInventory = false;
+  bool _showMissions = true;
+
+  // HUD
+  MainHud? _mainHud;
+
+  // Inventário
+  final List<InventoryItem> _inventoryItems = [];
+
+  // Toasts
+  final List<ToastMessage> _toasts = [];
+  ToastOverlayComponent? _toastComponent;
+  int _toastIdCounter = 0;
+
   // Player animation states
   bool _isSitting = false;
   double _sitTimer = 0;
@@ -151,6 +173,14 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
   @override
   Color backgroundColor() => const Color(0xFF87CEEB);
+
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    // Atualiza tamanho dos componentes de UI quando a tela muda
+    _mainHud?.size = camera.viewport.size;
+    _toastComponent?.size = camera.viewport.size;
+  }
 
   @override
   Future<void> onLoad() async {
@@ -377,9 +407,13 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     // Carregar save
     final save = SaveService();
-    if (save.isInitialized) {
-      // TODO: aplicar dados salvos (posição, aparência, etc.)
+    if (!save.isInitialized) {
+      await save.initialize();
     }
+    // TODO: aplicar dados salvos (posição, aparência, etc.)
+
+    // Inicializar HUD
+    _initHud();
 
     // Áudio ambiente
     AudioService().playMusic('ambient');
@@ -1062,33 +1096,14 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     }
   }
 
-  /// Mostra feedback visual da recompensa.
+  /// Mostra feedback visual da recompensa via toast.
   void _showRewardFeedback(List<MissionReward> rewards) {
     final totalStars = rewards.fold(0, (sum, r) => sum + r.stars);
     final totalCoins = rewards.fold(0, (sum, r) => sum + r.coins);
-
-    final feedback = TextComponent(
-      text: '🎉 Missão completa! +$totalStars⭐ +$totalCoins🪙',
-      position: camera.viewport.size / 2,
-      anchor: Anchor.center,
-      textRenderer: TextPaint(
-        style: const TextStyle(
-          color: Colors.amber,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          shadows: [
-            Shadow(color: Colors.black87, blurRadius: 4),
-          ],
-        ),
-      ),
+    _showToast(
+      '🎉 Missão completa! +$totalStars⭐ +$totalCoins🪙',
+      type: ToastType.mission,
     );
-
-    camera.viewport.add(feedback);
-
-    // Auto-remove após 3 segundos
-    Future.delayed(const Duration(seconds: 3), () {
-      feedback.removeFromParent();
-    });
   }
 
   Component _buildWorld() {
@@ -1122,6 +1137,144 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     // TODO: Adicionar mais prédios, NPCs, objetos interativos
 
     return world;
+  }
+
+  // ─── UI Integration ───
+
+  void _initHud() {
+    _mainHud = MainHud(
+      size: camera.viewport.size,
+      playerName: SaveService().playerData.playerName,
+      coins: SaveService().playerData.coins,
+      stars: SaveService().playerData.stars,
+      onPausePressed: _openPauseMenu,
+      onInventoryPressed: _openInventory,
+      onMissionsPressed: _toggleMissionHud,
+    );
+    camera.viewport.add(_mainHud!);
+
+    // Toast component
+    _toastComponent = ToastOverlayComponent(
+      toasts: _toasts,
+    );
+    camera.viewport.add(_toastComponent!);
+  }
+
+  void _openPauseMenu() {
+    if (_isPaused) return;
+    _isPaused = true;
+    pauseEngine();
+    AudioService().pauseMusic();
+
+    final overlay = PauseMenuOverlay(
+      onResume: _closePauseMenu,
+      onSettings: _openSettings,
+      onQuit: _quitToMenu,
+    );
+    overlay.size = camera.viewport.size;
+    camera.viewport.add(overlay);
+  }
+
+  void _closePauseMenu() {
+    _isPaused = false;
+    // Remove todos os overlays de pausa/config
+    for (final c in List<Component>.from(camera.viewport.children)) {
+      if (c is PauseMenuOverlay || c is SettingsOverlayComponent) {
+        c.removeFromParent();
+      }
+    }
+    _showSettings = false;
+    resumeEngine();
+    AudioService().resumeMusic();
+  }
+
+  void _openSettings() {
+    if (_showSettings) return;
+    _showSettings = true;
+
+    // Remove pause menu
+    for (final c in List<Component>.from(camera.viewport.children)) {
+      if (c is PauseMenuOverlay) {
+        c.removeFromParent();
+      }
+    }
+
+    final overlay = SettingsOverlayComponent(
+      onBack: () {
+        _showSettings = false;
+        // Volta para o pause menu
+        for (final c in List<Component>.from(camera.viewport.children)) {
+          if (c is SettingsOverlayComponent) {
+            c.removeFromParent();
+          }
+        }
+        final pauseOverlay = PauseMenuOverlay(
+          onResume: _closePauseMenu,
+          onSettings: _openSettings,
+          onQuit: _quitToMenu,
+        );
+        pauseOverlay.size = camera.viewport.size;
+        camera.viewport.add(pauseOverlay);
+      },
+    );
+    overlay.size = camera.viewport.size;
+    camera.viewport.add(overlay);
+  }
+
+  void _quitToMenu() {
+    _closePauseMenu();
+    // TODO: navegar para menu — atualmente só resume
+  }
+
+  void _openInventory() {
+    if (_showInventory) return;
+    _showInventory = true;
+    pauseEngine();
+
+    final overlay = InventoryOverlayComponent(
+      items: _inventoryItems,
+      onClose: () {
+        _showInventory = false;
+        for (final c in List<Component>.from(camera.viewport.children)) {
+          if (c is InventoryOverlayComponent) {
+            c.removeFromParent();
+          }
+        }
+        resumeEngine();
+      },
+    );
+    overlay.size = camera.viewport.size;
+    camera.viewport.add(overlay);
+  }
+
+  void _toggleMissionHud() {
+    _showMissions = !_showMissions;
+    if (_showMissions) {
+      _updateMissionHud();
+    } else {
+      if (_missionHudAdded) {
+        _missionHud.removeFromParent();
+        _missionHudAdded = false;
+      }
+    }
+  }
+
+  void _showToast(String text, {ToastType type = ToastType.info}) {
+    _toastIdCounter++;
+    _toasts.add(ToastMessage(
+      id: 'toast_$_toastIdCounter',
+      text: text,
+      type: type,
+    ));
+    _toastComponent?.updateToasts(List.from(_toasts));
+
+    // Auto-remove após duração + animação
+    Future.delayed(const Duration(seconds: 3), () {
+      if (_toasts.isNotEmpty) {
+        _toasts.removeAt(0);
+        _toastComponent?.updateToasts(List.from(_toasts));
+      }
+    });
   }
 
   void pauseGame() {
