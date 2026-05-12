@@ -1,4 +1,5 @@
 import 'locations/buildings/centro/casa_jogador.dart';
+import 'locations/buildings/centro/correios.dart';
 import 'locations/buildings/centro/escola.dart';
 import 'locations/buildings/centro/farmacia.dart';
 import 'locations/buildings/centro/mercadao.dart';
@@ -12,6 +13,7 @@ import 'minigames/games/memory/lista_compras.dart';
 import 'minigames/games/memory/remedio_certo.dart';
 import 'minigames/games/puzzle/alfabeto_colorido.dart';
 import 'minigames/games/puzzle/organizar_cidade.dart';
+import 'minigames/games/sequence/carteiro_express.dart';
 import 'minigames/games/sequence/padeiro_mirim.dart';
 import 'minigames/minigame_manager.dart';
 import 'missions/definitions/arc1/m1_bolo_vovo_maria.dart';
@@ -30,7 +32,8 @@ void registerAllContent() {
     ..register(Padaria())
     ..register(Mercadao())
     ..register(Escola())
-    ..register(Farmacia());
+    ..register(Farmacia())
+    ..register(Correios());
 
   // ─── Mini-jogos ───
   MiniGameManager()
@@ -49,6 +52,10 @@ void registerAllContent() {
     ..register(
       'padeiro_mirim',
       () => PadeiroMirimMiniGame(),
+    )
+    ..register(
+      'carteiro_express',
+      () => CarteiroExpressMiniGame(),
     )
     ..register(
       'matematica_lousa',

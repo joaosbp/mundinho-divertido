@@ -10,6 +10,7 @@ import '../entities/npcs/npc_base.dart';
 import '../entities/npcs/prefeito_tico.dart';
 import '../entities/player/player.dart';
 import '../locations/buildings/centro/casa_jogador.dart';
+import '../locations/buildings/centro/correios.dart';
 import '../locations/buildings/centro/escola.dart';
 import '../locations/buildings/centro/farmacia.dart';
 import '../locations/buildings/centro/mercadao.dart';
@@ -22,6 +23,7 @@ import '../missions/mission_base.dart';
 import '../missions/mission_manager.dart';
 import '../ui/dialogs/npc_dialogue.dart';
 
+import 'correios_interior_scene.dart';
 import 'escola_interior_scene.dart';
 import 'farmacia_interior_scene.dart';
 import 'interior_scene.dart';
@@ -104,6 +106,15 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   late TextComponent _farmaciaHint;
   bool _farmaciaHintAdded = false;
   FarmaciaInteriorScene? _farmaciaInteriorScene;
+
+  // Correios
+  late CorreiosExterior _correiosExterior;
+  final Vector2 _correiosPosition = Vector2(100, 800);
+  static const double _correiosEnterDistance = 100.0;
+  bool _nearCorreios = false;
+  late TextComponent _correiosHint;
+  bool _correiosHintAdded = false;
+  CorreiosInteriorScene? _correiosInteriorScene;
 
   // NPC
   late CidadaoParque _cidadao;
@@ -191,6 +202,10 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     // Adicionar Farmácia ao mundo
     _farmaciaExterior = FarmaciaExterior(position: _farmaciaPosition);
     await world.add(_farmaciaExterior);
+
+    // Adicionar Correios ao mundo
+    _correiosExterior = CorreiosExterior(position: _correiosPosition);
+    await world.add(_correiosExterior);
 
     // Adicionar NPC ao parque
     _cidadao = CidadaoParque(
@@ -310,6 +325,23 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     _farmaciaHint = TextComponent(
       text: 'Entrar',
       position: _farmaciaPosition + Vector2(0, -80),
+      anchor: Anchor.center,
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(color: Colors.black87, blurRadius: 4),
+          ],
+        ),
+      ),
+    );
+
+    // Dica dos Correios
+    _correiosHint = TextComponent(
+      text: 'Entrar',
+      position: _correiosPosition + Vector2(0, -80),
       anchor: Anchor.center,
       textRenderer: TextPaint(
         style: const TextStyle(
@@ -455,6 +487,18 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       _farmaciaHintAdded = false;
     }
 
+    // Detectar proximidade com correios
+    final distCorreios = _player.position.distanceTo(_correiosPosition);
+    _nearCorreios = distCorreios < _correiosEnterDistance;
+
+    if (_nearCorreios && !_correiosHintAdded) {
+      world.add(_correiosHint);
+      _correiosHintAdded = true;
+    } else if (!_nearCorreios && _correiosHintAdded) {
+      _correiosHint.removeFromParent();
+      _correiosHintAdded = false;
+    }
+
     // Player sitting animation
     if (_isSitting) {
       _sitTimer += dt;
@@ -577,6 +621,19 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       }
     }
 
+    // Verificar toque nos correios quando próximo
+    if (_nearCorreios) {
+      final correiosRect = Rect.fromCenter(
+        center: Offset(_correiosPosition.x, _correiosPosition.y),
+        width: _correiosExterior.size.x,
+        height: _correiosExterior.size.y,
+      );
+      if (correiosRect.contains(Offset(worldPos.x, worldPos.y))) {
+        _enterCorreiosInterior();
+        return;
+      }
+    }
+
     // Toque no mundo = mover jogador (exceto se sentado/deslizando)
     if (!_isSitting && !_isSliding) {
       _player.moveTo(worldPos);
@@ -677,6 +734,10 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     if (_farmaciaHintAdded) {
       _farmaciaHint.removeFromParent();
       _farmaciaHintAdded = false;
+    }
+    if (_correiosHintAdded) {
+      _correiosHint.removeFromParent();
+      _correiosHintAdded = false;
     }
   }
 
@@ -808,6 +869,35 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     LocationManager().exit('prefeitura');
 
     _player.position = _prefeituraPosition + Vector2(0, 100);
+    _player.moveTo(_player.position);
+  }
+
+  /// Transiciona para o interior dos Correios.
+  void _enterCorreiosInterior() {
+    _inInterior = true;
+    _removeAllHints();
+
+    LocationManager().enter('correios');
+
+    _correiosInteriorScene = CorreiosInteriorScene(
+      size: camera.viewport.size,
+      onExit: _exitCorreiosInterior,
+    );
+    camera.viewport.add(_correiosInteriorScene!);
+    _correiosInteriorScene!.enter();
+  }
+
+  /// Sai do interior dos Correios e volta ao mundo.
+  void _exitCorreiosInterior() {
+    if (_correiosInteriorScene == null) return;
+
+    camera.viewport.remove(_correiosInteriorScene!);
+    _correiosInteriorScene = null;
+    _inInterior = false;
+
+    LocationManager().exit('correios');
+
+    _player.position = _correiosPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
   }
 
