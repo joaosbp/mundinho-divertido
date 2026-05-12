@@ -29,6 +29,7 @@
 | Subagente | Missão | Modelo | Runtime | Status |
 |-----------|--------|--------|---------|--------|
 | fe-casa-01 | M1-CASA | Kimi | Isolado | 🟡 Executando |
+| Session Key | `agent:main:subagent:77e588b2-f27f-4f5a-adf7-0f0772bae746` | | | |
 
 ---
 
