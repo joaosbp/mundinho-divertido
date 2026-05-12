@@ -41,6 +41,7 @@
 | fe-escola-01 | M1-ESCOLA | Kimi | Isolado | ✅ Concluída |
 | Session Key | `agent:main:subagent:bc5e996f-1382-4932-8f7e-87b4ee4b616d` | | | |
 | fe-farmacia-01 | M1-FARMACIA | Kimi | Isolado | 🟡 Executando |
+| Session Key | `agent:main:subagent:d0d8f221-8b3c-4f27-a4a8-bd52f540abee` | | | |
 | Session Key | `agent:main:subagent:bc5e996f-1382-4932-8f7e-87b4ee4b616d` | | | |
 | Session Key | `agent:main:subagent:7dedcc60-8090-4e60-923d-a6657b23022e` | | | |
 | Session Key | `agent:main:subagent:b746c231-1d2f-4ea6-992a-73792b9a0815` | | | |
