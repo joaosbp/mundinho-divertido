@@ -10,12 +10,14 @@ import '../entities/npcs/npc_base.dart';
 import '../entities/player/player.dart';
 import '../locations/buildings/centro/casa_jogador.dart';
 import '../locations/buildings/centro/mercadao.dart';
+import '../locations/buildings/centro/padaria.dart';
 import '../locations/buildings/centro/parque_central.dart';
 import '../locations/location_manager.dart';
 import '../ui/dialogs/npc_dialogue.dart';
 
 import 'interior_scene.dart';
 import 'mercadao_interior_scene.dart';
+import 'padaria_interior_scene.dart';
 
 /// FlameGame principal do Mundinho Divertido.
 ///
@@ -55,6 +57,16 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   late TextComponent _mercadaoHint;
   bool _mercadaoHintAdded = false;
   MercadaoInteriorScene? _mercadaoInteriorScene;
+
+  // Padaria
+  late PadariaExterior _padariaExterior;
+  late CheirinhoParticles _padariaCheirinho;
+  final Vector2 _padariaPosition = Vector2(1100, 500);
+  static const double _padariaEnterDistance = 100.0;
+  bool _nearPadaria = false;
+  late TextComponent _padariaHint;
+  bool _padariaHintAdded = false;
+  PadariaInteriorScene? _padariaInteriorScene;
 
   // NPC
   late CidadaoParque _cidadao;
@@ -116,6 +128,12 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     _mercadaoExterior = MercadaoExterior(position: _mercadaoPosition);
     await world.add(_mercadaoExterior);
 
+    // Adicionar Padaria ao mundo
+    _padariaExterior = PadariaExterior(position: _padariaPosition);
+    await world.add(_padariaExterior);
+    _padariaCheirinho = CheirinhoParticles(position: _padariaPosition + Vector2(0, -20));
+    await world.add(_padariaCheirinho);
+
     // Adicionar NPC ao parque
     _cidadao = CidadaoParque(
       position: _parquePosition + Vector2(_parqueSize.x / 2, _parqueSize.y / 2),
@@ -166,6 +184,23 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     _mercadaoHint = TextComponent(
       text: 'Entrar',
       position: _mercadaoPosition + Vector2(0, -80),
+      anchor: Anchor.center,
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(color: Colors.black87, blurRadius: 4),
+          ],
+        ),
+      ),
+    );
+
+    // Dica da Padaria
+    _padariaHint = TextComponent(
+      text: 'Entrar',
+      position: _padariaPosition + Vector2(0, -80),
       anchor: Anchor.center,
       textRenderer: TextPaint(
         style: const TextStyle(
@@ -238,6 +273,18 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       _mercadaoHintAdded = false;
     }
 
+    // Detectar proximidade com padaria
+    final distPadaria = _player.position.distanceTo(_padariaPosition);
+    _nearPadaria = distPadaria < _padariaEnterDistance;
+
+    if (_nearPadaria && !_padariaHintAdded) {
+      world.add(_padariaHint);
+      _padariaHintAdded = true;
+    } else if (!_nearPadaria && _padariaHintAdded) {
+      _padariaHint.removeFromParent();
+      _padariaHintAdded = false;
+    }
+
     // Player sitting animation
     if (_isSitting) {
       _sitTimer += dt;
@@ -306,6 +353,19 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       );
       if (mercadaoRect.contains(Offset(worldPos.x, worldPos.y))) {
         _enterMercadaoInterior();
+        return;
+      }
+    }
+
+    // Verificar toque na padaria quando próximo
+    if (_nearPadaria) {
+      final padariaRect = Rect.fromCenter(
+        center: Offset(_padariaPosition.x, _padariaPosition.y),
+        width: _padariaExterior.size.x,
+        height: _padariaExterior.size.y,
+      );
+      if (padariaRect.contains(Offset(worldPos.x, worldPos.y))) {
+        _enterPadariaInterior();
         return;
       }
     }
@@ -395,6 +455,10 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       _mercadaoHint.removeFromParent();
       _mercadaoHintAdded = false;
     }
+    if (_padariaHintAdded) {
+      _padariaHint.removeFromParent();
+      _padariaHintAdded = false;
+    }
   }
 
   /// Transiciona para o interior da Casa do Jogador.
@@ -456,6 +520,35 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     LocationManager().exit('mercadao');
 
     _player.position = _mercadaoPosition + Vector2(0, 100);
+    _player.moveTo(_player.position);
+  }
+
+  /// Transiciona para o interior da Padaria.
+  void _enterPadariaInterior() {
+    _inInterior = true;
+    _removeAllHints();
+
+    LocationManager().enter('padaria');
+
+    _padariaInteriorScene = PadariaInteriorScene(
+      size: camera.viewport.size,
+      onExit: _exitPadariaInterior,
+    );
+    camera.viewport.add(_padariaInteriorScene!);
+    _padariaInteriorScene!.enter();
+  }
+
+  /// Sai do interior da Padaria e volta ao mundo.
+  void _exitPadariaInterior() {
+    if (_padariaInteriorScene == null) return;
+
+    camera.viewport.remove(_padariaInteriorScene!);
+    _padariaInteriorScene = null;
+    _inInterior = false;
+
+    LocationManager().exit('padaria');
+
+    _player.position = _padariaPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
   }
 

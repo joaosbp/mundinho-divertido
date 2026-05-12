@@ -6,6 +6,7 @@ import 'locations/buildings/centro/prefeitura.dart';
 import 'locations/location_manager.dart';
 import 'minigames/games/memory/lista_compras.dart';
 import 'minigames/games/puzzle/organizar_cidade.dart';
+import 'minigames/games/sequence/padeiro_mirim.dart';
 import 'minigames/minigame_manager.dart';
 import 'missions/definitions/arc1/m1_bolo_vovo_maria.dart';
 import 'missions/mission_manager.dart';
@@ -31,6 +32,10 @@ void registerAllContent() {
     ..register(
       'lista_compras',
       () => ListaComprasMiniGame(),
+    )
+    ..register(
+      'padeiro_mirim',
+      () => PadeiroMirimMiniGame(),
     );
 
   // ─── Missões ───
