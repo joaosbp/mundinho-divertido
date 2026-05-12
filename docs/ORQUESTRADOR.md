@@ -34,7 +34,9 @@
 | Session Key | `agent:main:subagent:ba9f3079-9b3f-4037-891a-5185ab1f6c35` | | | |
 | fe-mercado-01 | M1-MERCADO | Kimi | Isolado | ✅ Concluída |
 | Session Key | `agent:main:subagent:7a12dc2e-2a30-4e4a-aa2c-42fa0c324f52` | | | |
-| fe-padaria-01 | M1-PADARIA | Kimi | Isolado | 🟡 Executando |
+| fe-padaria-01 | M1-PADARIA | Kimi | Isolado | ✅ Concluída |
+| Session Key | `agent:main:subagent:b746c231-1d2f-4ea6-992a-73792b9a0815` | | | |
+| fe-prefeitura-01 | M1-PREFEITURA | Kimi | Isolado | 🟡 Executando |
 | Session Key | `agent:main:subagent:b746c231-1d2f-4ea6-992a-73792b9a0815` | | | |
 | Session Key | `agent:main:subagent:7a12dc2e-2a30-4e4a-aa2c-42fa0c324f52` | | | |
 
