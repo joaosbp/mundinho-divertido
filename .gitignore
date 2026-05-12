@@ -14,6 +14,10 @@ doc/api/
 # dotenv environment variables file
 .env*
 
+# Firebase
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
 # Avoid committing generated Javascript files:
 *.dart.js
 # Produced by the --dump-info flag.
