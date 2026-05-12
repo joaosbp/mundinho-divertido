@@ -10,6 +10,7 @@ import '../entities/npcs/npc_base.dart';
 import '../entities/npcs/prefeito_tico.dart';
 import '../entities/player/player.dart';
 import '../locations/buildings/centro/casa_jogador.dart';
+import '../locations/buildings/centro/escola.dart';
 import '../locations/buildings/centro/mercadao.dart';
 import '../locations/buildings/centro/padaria.dart';
 import '../locations/buildings/centro/parque_central.dart';
@@ -20,6 +21,7 @@ import '../missions/mission_base.dart';
 import '../missions/mission_manager.dart';
 import '../ui/dialogs/npc_dialogue.dart';
 
+import 'escola_interior_scene.dart';
 import 'interior_scene.dart';
 import 'mercadao_interior_scene.dart';
 import 'padaria_interior_scene.dart';
@@ -82,6 +84,15 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   late TextComponent _prefeituraHint;
   bool _prefeituraHintAdded = false;
   PrefeituraInteriorScene? _prefeituraInteriorScene;
+
+  // Escola
+  late EscolaExterior _escolaExterior;
+  final Vector2 _escolaPosition = Vector2(500, 800);
+  static const double _escolaEnterDistance = 100.0;
+  bool _nearEscola = false;
+  late TextComponent _escolaHint;
+  bool _escolaHintAdded = false;
+  EscolaInteriorScene? _escolaInteriorScene;
 
   // NPC
   late CidadaoParque _cidadao;
@@ -161,6 +172,10 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     // Adicionar Prefeitura ao mundo
     _prefeituraExterior = PrefeituraExterior(position: _prefeituraPosition);
     await world.add(_prefeituraExterior);
+
+    // Adicionar Escola ao mundo
+    _escolaExterior = EscolaExterior(position: _escolaPosition);
+    await world.add(_escolaExterior);
 
     // Adicionar NPC ao parque
     _cidadao = CidadaoParque(
@@ -246,6 +261,23 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     _prefeituraHint = TextComponent(
       text: 'Entrar',
       position: _prefeituraPosition + Vector2(0, -100),
+      anchor: Anchor.center,
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(color: Colors.black87, blurRadius: 4),
+          ],
+        ),
+      ),
+    );
+
+    // Dica da Escola
+    _escolaHint = TextComponent(
+      text: 'Entrar',
+      position: _escolaPosition + Vector2(0, -90),
       anchor: Anchor.center,
       textRenderer: TextPaint(
         style: const TextStyle(
@@ -367,6 +399,18 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       _prefeituraHintAdded = false;
     }
 
+    // Detectar proximidade com escola
+    final distEscola = _player.position.distanceTo(_escolaPosition);
+    _nearEscola = distEscola < _escolaEnterDistance;
+
+    if (_nearEscola && !_escolaHintAdded) {
+      world.add(_escolaHint);
+      _escolaHintAdded = true;
+    } else if (!_nearEscola && _escolaHintAdded) {
+      _escolaHint.removeFromParent();
+      _escolaHintAdded = false;
+    }
+
     // Player sitting animation
     if (_isSitting) {
       _sitTimer += dt;
@@ -463,6 +507,19 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       }
     }
 
+    // Verificar toque na escola quando próximo
+    if (_nearEscola) {
+      final escolaRect = Rect.fromCenter(
+        center: Offset(_escolaPosition.x, _escolaPosition.y),
+        width: _escolaExterior.size.x,
+        height: _escolaExterior.size.y,
+      );
+      if (escolaRect.contains(Offset(worldPos.x, worldPos.y))) {
+        _enterEscolaInterior();
+        return;
+      }
+    }
+
     // Toque no mundo = mover jogador (exceto se sentado/deslizando)
     if (!_isSitting && !_isSliding) {
       _player.moveTo(worldPos);
@@ -555,6 +612,10 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     if (_prefeituraHintAdded) {
       _prefeituraHint.removeFromParent();
       _prefeituraHintAdded = false;
+    }
+    if (_escolaHintAdded) {
+      _escolaHint.removeFromParent();
+      _escolaHintAdded = false;
     }
   }
 
@@ -686,6 +747,35 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     LocationManager().exit('prefeitura');
 
     _player.position = _prefeituraPosition + Vector2(0, 100);
+    _player.moveTo(_player.position);
+  }
+
+  /// Transiciona para o interior da Escola.
+  void _enterEscolaInterior() {
+    _inInterior = true;
+    _removeAllHints();
+
+    LocationManager().enter('escola');
+
+    _escolaInteriorScene = EscolaInteriorScene(
+      size: camera.viewport.size,
+      onExit: _exitEscolaInterior,
+    );
+    camera.viewport.add(_escolaInteriorScene!);
+    _escolaInteriorScene!.enter();
+  }
+
+  /// Sai do interior da Escola e volta ao mundo.
+  void _exitEscolaInterior() {
+    if (_escolaInteriorScene == null) return;
+
+    camera.viewport.remove(_escolaInteriorScene!);
+    _escolaInteriorScene = null;
+    _inInterior = false;
+
+    LocationManager().exit('escola');
+
+    _player.position = _escolaPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
   }
 

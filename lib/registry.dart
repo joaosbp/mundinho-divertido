@@ -1,10 +1,14 @@
 import 'locations/buildings/centro/casa_jogador.dart';
+import 'locations/buildings/centro/escola.dart';
 import 'locations/buildings/centro/mercadao.dart';
 import 'locations/buildings/centro/parque_central.dart';
 import 'locations/buildings/centro/padaria.dart';
 import 'locations/buildings/centro/prefeitura.dart';
 import 'locations/location_manager.dart';
+import 'minigames/games/creative/pintura_livre.dart';
+import 'minigames/games/math/matematica_lousa.dart';
 import 'minigames/games/memory/lista_compras.dart';
+import 'minigames/games/puzzle/alfabeto_colorido.dart';
 import 'minigames/games/puzzle/organizar_cidade.dart';
 import 'minigames/games/sequence/padeiro_mirim.dart';
 import 'minigames/minigame_manager.dart';
@@ -22,7 +26,8 @@ void registerAllContent() {
     ..register(ParqueCentral())
     ..register(Prefeitura())
     ..register(Padaria())
-    ..register(Mercadao());
+    ..register(Mercadao())
+    ..register(Escola());
 
   // ─── Mini-jogos ───
   MiniGameManager()
@@ -37,6 +42,18 @@ void registerAllContent() {
     ..register(
       'padeiro_mirim',
       () => PadeiroMirimMiniGame(),
+    )
+    ..register(
+      'matematica_lousa',
+      () => MatematicaLousaMiniGame(),
+    )
+    ..register(
+      'alfabeto_colorido',
+      () => AlfabetoColoridoMiniGame(),
+    )
+    ..register(
+      'pintura_livre',
+      () => PinturaLivreMiniGame(),
     );
 
   // ─── Missões ───
