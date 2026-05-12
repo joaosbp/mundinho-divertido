@@ -5,9 +5,13 @@ import 'package:flutter/material.dart';
 
 import '../core/services/audio_service.dart';
 import '../core/services/save_service.dart';
+import '../entities/npcs/cidadao_parque.dart';
+import '../entities/npcs/npc_base.dart';
 import '../entities/player/player.dart';
 import '../locations/buildings/centro/casa_jogador.dart';
+import '../locations/buildings/centro/parque_central.dart';
 import '../locations/location_manager.dart';
+import '../ui/dialogs/npc_dialogue.dart';
 
 import 'interior_scene.dart';
 
@@ -31,6 +35,32 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   InteriorScene? _interiorScene;
   late TextComponent _enterHint;
   bool _hintAdded = false;
+
+  // Parque Central
+  late ParqueCentralArea _parqueArea;
+  final Vector2 _parquePosition = Vector2(600, 400);
+  final Vector2 _parqueSize = Vector2(300, 240);
+  static const double _parqueInteractDistance = 120.0;
+  bool _nearParque = false;
+  late TextComponent _parqueHint;
+  bool _parqueHintAdded = false;
+
+  // NPC
+  late CidadaoParque _cidadao;
+
+  // Diálogo
+  NpcDialogueOverlay? _dialogueOverlay;
+  bool _isDialogueOpen = false;
+
+  // Player animation states
+  bool _isSitting = false;
+  double _sitTimer = 0;
+  bool _isSliding = false;
+  double _slideTimer = 0;
+  Vector2? _slideTarget;
+  static const double _slideDuration = 1.5;
+  static const double _sitDuration = 3.0;
+  Vector2? _preSitPosition;
 
   // Ciclo dia/noite (15 min reais = 1 dia no jogo)
   double _dayTime = 0.0; // 0.0 = 06:00, 0.5 = 12:00, 1.0 = 18:00, etc.
@@ -63,6 +93,26 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     _casaExterior = CasaJogadorExterior(position: _casaPosition);
     await world.add(_casaExterior);
 
+    // Adicionar Parque Central ao mundo
+    _parqueArea = ParqueCentralArea(
+      position: _parquePosition,
+      size: _parqueSize,
+      onInteract: _onParqueInteract,
+    );
+    await world.add(_parqueArea);
+
+    // Adicionar NPC ao parque
+    _cidadao = CidadaoParque(
+      position: _parquePosition + Vector2(_parqueSize.x / 2, _parqueSize.y / 2),
+      patrolBounds: _parqueArea.patrolBounds,
+    );
+    // Override onInteract para abrir diálogo
+    _cidadao = _CidadaoWithCallback(
+      base: _cidadao,
+      onInteractCallback: _openNpcDialogue,
+    );
+    await world.add(_cidadao);
+
     // Dica "Entrar" próxima à casa
     _enterHint = TextComponent(
       text: 'Entrar',
@@ -72,6 +122,23 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
         style: const TextStyle(
           color: Colors.white,
           fontSize: 16,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(color: Colors.black87, blurRadius: 4),
+          ],
+        ),
+      ),
+    );
+
+    // Dica do parque
+    _parqueHint = TextComponent(
+      text: 'Parque Central',
+      position: _parquePosition + Vector2(_parqueSize.x / 2, -20),
+      anchor: Anchor.center,
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
           fontWeight: FontWeight.bold,
           shadows: [
             Shadow(color: Colors.black87, blurRadius: 4),
@@ -98,6 +165,8 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     _dayTime += dt / _dayDurationSeconds;
     if (_dayTime >= 1.0) _dayTime -= 1.0;
 
+    if (_inInterior || _isDialogueOpen) return;
+
     // Detectar proximidade com casa
     if (!_inInterior) {
       final distance = _player.position.distanceTo(_casaPosition);
@@ -111,14 +180,63 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
         _hintAdded = false;
       }
     }
+
+    // Detectar proximidade com parque
+    final parqueCenter = _parquePosition + Vector2(_parqueSize.x / 2, _parqueSize.y / 2);
+    final distParque = _player.position.distanceTo(parqueCenter);
+    _nearParque = distParque < _parqueInteractDistance;
+
+    if (_nearParque && !_parqueHintAdded) {
+      world.add(_parqueHint);
+      _parqueHintAdded = true;
+    } else if (!_nearParque && _parqueHintAdded) {
+      _parqueHint.removeFromParent();
+      _parqueHintAdded = false;
+    }
+
+    // Player sitting animation
+    if (_isSitting) {
+      _sitTimer += dt;
+      if (_sitTimer >= _sitDuration) {
+        _isSitting = false;
+        _sitTimer = 0;
+        // Restore position
+        if (_preSitPosition != null) {
+          _player.position = _preSitPosition!;
+          _preSitPosition = null;
+        }
+      }
+      return; // Block movement while sitting
+    }
+
+    // Player sliding animation
+    if (_isSliding) {
+      _slideTimer += dt;
+      if (_slideTimer >= _slideDuration) {
+        _isSliding = false;
+        _slideTimer = 0;
+        _slideTarget = null;
+      } else {
+        // Slide movement (fast, downward)
+        final progress = _slideTimer / _slideDuration;
+        final slideDirection = Vector2(0.3, 1); // slide down-right
+        _player.position += slideDirection * 120 * dt;
+      }
+      return; // Block normal movement while sliding
+    }
   }
 
   @override
   void onTapDown(TapDownEvent event) {
     super.onTapDown(event);
 
-    // Ignora toques no mundo quando no interior
+    // Ignora toques no mundo quando no interior ou diálogo aberto
     if (_inInterior) return;
+
+    if (_isDialogueOpen) {
+      // Diálogo consome o toque
+      return;
+    }
 
     final worldPos = camera.globalToLocal(event.canvasPosition);
 
@@ -135,8 +253,76 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       }
     }
 
-    // Toque no mundo = mover jogador
-    _player.moveTo(worldPos);
+    // Toque no mundo = mover jogador (exceto se sentado/deslizando)
+    if (!_isSitting && !_isSliding) {
+      _player.moveTo(worldPos);
+    }
+  }
+
+  /// Callback quando o player interage com elementos do parque.
+  void _onParqueInteract(String interactionType, Vector2 position) {
+    final dist = _player.position.distanceTo(position);
+    if (dist > 80) {
+      // Mover player perto do elemento primeiro
+      _player.moveTo(position);
+      return;
+    }
+
+    switch (interactionType) {
+      case 'banco':
+        _playerSit(position);
+        break;
+      case 'escorregador':
+        _playerSlide(position);
+        break;
+    }
+  }
+
+  void _playerSit(Vector2 bancoPos) {
+    if (_isSitting || _isSliding) return;
+    _isSitting = true;
+    _sitTimer = 0;
+    _preSitPosition = _player.position.clone();
+    // Move player to bench position
+    _player.position = bancoPos + Vector2(0, 10);
+  }
+
+  void _playerSlide(Vector2 escorregadorPos) {
+    if (_isSitting || _isSliding) return;
+    _isSliding = true;
+    _slideTimer = 0;
+    // Move player to top of slide
+    _player.position = escorregadorPos + Vector2(-15, -25);
+  }
+
+  void _openNpcDialogue() {
+    if (_isDialogueOpen) return;
+    _isDialogueOpen = true;
+
+    // Pausa movimento do NPC
+    _cidadao.estado = NpcState.interacting;
+
+    _dialogueOverlay = NpcDialogueOverlay(
+      npcName: _cidadao.nome,
+      text: _cidadao.dialogos.first,
+      onClose: _closeNpcDialogue,
+      size: camera.viewport.size,
+      avatarColor: const Color(0xFF42A5F5),
+    );
+
+    camera.viewport.add(_dialogueOverlay!);
+    _dialogueOverlay!.show();
+  }
+
+  void _closeNpcDialogue() {
+    if (_dialogueOverlay == null) return;
+
+    camera.viewport.remove(_dialogueOverlay!);
+    _dialogueOverlay = null;
+    _isDialogueOpen = false;
+
+    // Resume NPC
+    _cidadao.estado = NpcState.idle;
   }
 
   /// Transiciona para o interior da Casa do Jogador.
@@ -147,6 +333,11 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     if (_hintAdded) {
       _enterHint.removeFromParent();
       _hintAdded = false;
+    }
+
+    if (_parqueHintAdded) {
+      _parqueHint.removeFromParent();
+      _parqueHintAdded = false;
     }
 
     // Notifica o LocationManager
@@ -205,7 +396,7 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       ),
     );
 
-    // TODO: Adicionar prédios, NPCs, objetos interativos
+    // TODO: Adicionar mais prédios, NPCs, objetos interativos
 
     return world;
   }
@@ -218,5 +409,23 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   void resumeGame() {
     resumeEngine();
     AudioService().playMusic('ambient');
+  }
+}
+
+/// Wrapper para injetar callback de interação no CidadaoParque.
+class _CidadaoWithCallback extends CidadaoParque {
+  final VoidCallback onInteractCallback;
+
+  _CidadaoWithCallback({
+    required CidadaoParque base,
+    required this.onInteractCallback,
+  }) : super(
+          position: base.position,
+          patrolBounds: base.patrolBounds,
+        );
+
+  @override
+  void onInteract() {
+    onInteractCallback();
   }
 }

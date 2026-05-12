@@ -1,4 +1,5 @@
 import 'locations/buildings/centro/casa_jogador.dart';
+import 'locations/buildings/centro/parque_central.dart';
 import 'locations/buildings/centro/padaria.dart';
 import 'locations/buildings/centro/prefeitura.dart';
 import 'locations/location_manager.dart';
@@ -14,6 +15,7 @@ void registerAllContent() {
   // ─── Locais ───
   LocationManager()
     ..register(CasaJogador())
+    ..register(ParqueCentral())
     ..register(Prefeitura())
     ..register(Padaria());
 
