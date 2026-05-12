@@ -45,6 +45,7 @@
 | fe-correios-01 | M1-CORREIOS | Kimi | Isolado | ✅ Concluída |
 | Session Key | `agent:main:subagent:5ad31c7b-78b5-4467-b95c-f7b9acf55a38` | | | |
 | fe-ui-01 | M1-UI | Kimi | Isolado | 🟡 Executando |
+| Session Key | `agent:main:subagent:7789d4c4-0124-4c96-8610-dd6ba902494b` | | | |
 | Session Key | `agent:main:subagent:5ad31c7b-78b5-4467-b95c-f7b9acf55a38` | | | |
 | Session Key | `agent:main:subagent:d0d8f221-8b3c-4f27-a4a8-bd52f540abee` | | | |
 | Session Key | `agent:main:subagent:bc5e996f-1382-4932-8f7e-87b4ee4b616d` | | | |
