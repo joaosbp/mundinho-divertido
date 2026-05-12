@@ -44,6 +44,33 @@ A documentação completa do produto está em [`docs/`](docs/):
 - Flutter SDK ^3.11.5
 - Android SDK (min API 26 / Android 8.0)
 - Dart ^3.11.5
+- Node.js (para Firebase CLI)
+- Conta Google com acesso ao projeto Firebase
+
+### Setup Firebase (Obrigatório)
+
+O app usa Firebase para Analytics e Crashlytics. O arquivo `google-services.json` **não está versionado** por segurança.
+
+#### Primeira vez (setup completo)
+
+```bash
+# 1. Instalar Firebase CLI (se ainda não tiver)
+npm install -g firebase-tools
+firebase login
+
+# 2. Gerar o google-services.json
+firebase apps:sdkconfig ANDROID \
+  --project mundinho-divertido \
+  > android/app/google-services.json
+
+# 3. Verificar se o arquivo foi criado
+ls android/app/google-services.json
+```
+
+#### Alternativa: se já tem acesso ao projeto
+
+Peça para um membro do time enviar o arquivo `android/app/google-services.json` ou recupere do Firebase Console:
+https://console.firebase.google.com/project/mundinho-divertido/settings/general/android
 
 ### Comandos
 
@@ -71,16 +98,42 @@ flutter build apk --release
 
 ```
 lib/
-├── main.dart              # Entry point
-├── game/
-│   └── mundinho_game.dart # FlameGame principal
+├── main.dart                    # Entry point — init Firebase, serviços, registry
+├── registry.dart                # Registro centralizado de locais, minigames, missões
+├── core/
+│   ├── constants/               # Cores, dimensões, timings
+│   ├── services/                # Save, Analytics, Audio
+│   └── utils/                   # Helpers
+├── models/                      # PlayerData, SettingsData, LocationData
+├── engine/
+│   ├── mundinho_game.dart       # FlameGame principal
+│   ├── camera_controller.dart
+│   └── world_map.dart
+├── entities/
+│   └── player/
+│       └── player.dart          # Componente jogável
+├── locations/
+│   ├── location_base.dart       # Classe base para locais
+│   ├── location_manager.dart    # Registro e acesso
+│   └── buildings/centro/        # Implementações por bairro
+├── minigames/
+│   ├── minigame_base.dart
+│   ├── minigame_manager.dart
+│   └── games/                   # Implementações de minigames
+├── missions/
+│   ├── mission_base.dart
+│   ├── mission_manager.dart
+│   └── definitions/             # Missões por arco
+├── ui/
+│   └── hud/
+│       └── main_hud.dart        # Overlay do jogo
 └── screens/
-    └── menu_screen.dart   # Menu principal
+    └── menu_screen.dart         # Menu principal
 
-docs/                      # Documentação do produto
+docs/                            # Documentação completa do produto
 assets/
-├── images/                # Sprites, backgrounds, UI
-└── audio/                 # Músicas e SFX
+├── images/                      # Sprites, backgrounds, UI
+└── audio/                       # Músicas e SFX
 ```
 
 A estrutura completa planejada está em [ARQUITETURA.md](docs/ARQUITETURA.md).
@@ -100,6 +153,7 @@ flutter test
 - **Privacidade:** Ver [LGPD.md](docs/LGPD.md)
 - **Dados:** Zero coleta de dados pessoais de crianças. Analytics opt-in, desabilitado por padrão.
 - **Anúncios:** Zero anúncios de terceiros.
+- **Segurança:** O arquivo `google-services.json` não está versionado. Nunca commite credenciais Firebase.
 
 ---
 
