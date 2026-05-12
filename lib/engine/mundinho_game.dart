@@ -11,6 +11,7 @@ import '../entities/npcs/prefeito_tico.dart';
 import '../entities/player/player.dart';
 import '../locations/buildings/centro/casa_jogador.dart';
 import '../locations/buildings/centro/escola.dart';
+import '../locations/buildings/centro/farmacia.dart';
 import '../locations/buildings/centro/mercadao.dart';
 import '../locations/buildings/centro/padaria.dart';
 import '../locations/buildings/centro/parque_central.dart';
@@ -22,6 +23,7 @@ import '../missions/mission_manager.dart';
 import '../ui/dialogs/npc_dialogue.dart';
 
 import 'escola_interior_scene.dart';
+import 'farmacia_interior_scene.dart';
 import 'interior_scene.dart';
 import 'mercadao_interior_scene.dart';
 import 'padaria_interior_scene.dart';
@@ -93,6 +95,15 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   late TextComponent _escolaHint;
   bool _escolaHintAdded = false;
   EscolaInteriorScene? _escolaInteriorScene;
+
+  // Farmácia
+  late FarmaciaExterior _farmaciaExterior;
+  final Vector2 _farmaciaPosition = Vector2(200, 500);
+  static const double _farmaciaEnterDistance = 100.0;
+  bool _nearFarmacia = false;
+  late TextComponent _farmaciaHint;
+  bool _farmaciaHintAdded = false;
+  FarmaciaInteriorScene? _farmaciaInteriorScene;
 
   // NPC
   late CidadaoParque _cidadao;
@@ -176,6 +187,10 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     // Adicionar Escola ao mundo
     _escolaExterior = EscolaExterior(position: _escolaPosition);
     await world.add(_escolaExterior);
+
+    // Adicionar Farmácia ao mundo
+    _farmaciaExterior = FarmaciaExterior(position: _farmaciaPosition);
+    await world.add(_farmaciaExterior);
 
     // Adicionar NPC ao parque
     _cidadao = CidadaoParque(
@@ -278,6 +293,23 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     _escolaHint = TextComponent(
       text: 'Entrar',
       position: _escolaPosition + Vector2(0, -90),
+      anchor: Anchor.center,
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(color: Colors.black87, blurRadius: 4),
+          ],
+        ),
+      ),
+    );
+
+    // Dica da Farmácia
+    _farmaciaHint = TextComponent(
+      text: 'Entrar',
+      position: _farmaciaPosition + Vector2(0, -80),
       anchor: Anchor.center,
       textRenderer: TextPaint(
         style: const TextStyle(
@@ -411,6 +443,18 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       _escolaHintAdded = false;
     }
 
+    // Detectar proximidade com farmácia
+    final distFarmacia = _player.position.distanceTo(_farmaciaPosition);
+    _nearFarmacia = distFarmacia < _farmaciaEnterDistance;
+
+    if (_nearFarmacia && !_farmaciaHintAdded) {
+      world.add(_farmaciaHint);
+      _farmaciaHintAdded = true;
+    } else if (!_nearFarmacia && _farmaciaHintAdded) {
+      _farmaciaHint.removeFromParent();
+      _farmaciaHintAdded = false;
+    }
+
     // Player sitting animation
     if (_isSitting) {
       _sitTimer += dt;
@@ -520,6 +564,19 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       }
     }
 
+    // Verificar toque na farmácia quando próximo
+    if (_nearFarmacia) {
+      final farmaciaRect = Rect.fromCenter(
+        center: Offset(_farmaciaPosition.x, _farmaciaPosition.y),
+        width: _farmaciaExterior.size.x,
+        height: _farmaciaExterior.size.y,
+      );
+      if (farmaciaRect.contains(Offset(worldPos.x, worldPos.y))) {
+        _enterFarmaciaInterior();
+        return;
+      }
+    }
+
     // Toque no mundo = mover jogador (exceto se sentado/deslizando)
     if (!_isSitting && !_isSliding) {
       _player.moveTo(worldPos);
@@ -616,6 +673,10 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     if (_escolaHintAdded) {
       _escolaHint.removeFromParent();
       _escolaHintAdded = false;
+    }
+    if (_farmaciaHintAdded) {
+      _farmaciaHint.removeFromParent();
+      _farmaciaHintAdded = false;
     }
   }
 
@@ -747,6 +808,35 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     LocationManager().exit('prefeitura');
 
     _player.position = _prefeituraPosition + Vector2(0, 100);
+    _player.moveTo(_player.position);
+  }
+
+  /// Transiciona para o interior da Farmácia.
+  void _enterFarmaciaInterior() {
+    _inInterior = true;
+    _removeAllHints();
+
+    LocationManager().enter('farmacia');
+
+    _farmaciaInteriorScene = FarmaciaInteriorScene(
+      size: camera.viewport.size,
+      onExit: _exitFarmaciaInterior,
+    );
+    camera.viewport.add(_farmaciaInteriorScene!);
+    _farmaciaInteriorScene!.enter();
+  }
+
+  /// Sai do interior da Farmácia e volta ao mundo.
+  void _exitFarmaciaInterior() {
+    if (_farmaciaInteriorScene == null) return;
+
+    camera.viewport.remove(_farmaciaInteriorScene!);
+    _farmaciaInteriorScene = null;
+    _inInterior = false;
+
+    LocationManager().exit('farmacia');
+
+    _player.position = _farmaciaPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
   }
 
