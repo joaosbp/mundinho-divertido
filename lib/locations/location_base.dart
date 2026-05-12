@@ -1,5 +1,3 @@
-import 'package:flame/components.dart';
-
 import '../models/location_data.dart';
 
 /// Classe base para todos os locais da cidade.
@@ -33,8 +31,8 @@ abstract class LocationBase {
     }
     final parts = data.operatingHours!.split('-');
     if (parts.length != 2) return true;
-    final open = int.tryParse(parts[0]) ?? 0;
-    final close = int.tryParse(parts[1]) ?? 24;
+    final open = int.tryParse(parts[0].split(':')[0]) ?? 0;
+    final close = int.tryParse(parts[1].split(':')[0]) ?? 24;
     return gameHour >= open && gameHour < close;
   }
 }
