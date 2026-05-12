@@ -49,4 +49,12 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/characters/player/
+    - assets/images/characters/npcs/
+    - assets/images/buildings/
+    - assets/images/interiors/
+    - assets/images/items/
+    - assets/images/ui/
+    - assets/images/backgrounds/
+    - assets/images/effects/
     - assets/audio/

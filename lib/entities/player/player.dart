@@ -1,8 +1,8 @@
 import 'package:flame/components.dart';
-import 'package:flutter/material.dart';
 
-/// Personagem jogável.
-class Player extends PositionComponent with HasGameReference {
+/// Personagem jogável — Mundo.
+/// Usa sprite gerado por IA (mundo_idle.png).
+class Player extends SpriteComponent with HasGameReference {
   static const double _speed = 200.0;
 
   Vector2? _targetPosition;
@@ -10,41 +10,14 @@ class Player extends PositionComponent with HasGameReference {
   Player({required Vector2 position})
       : super(
           position: position,
-          size: Vector2.all(48),
+          size: Vector2.all(64),
           anchor: Anchor.center,
         );
 
   @override
-  void render(Canvas canvas) {
-    // Render placeholder enquanto não há sprite
-    final paint = Paint()..color = const Color(0xFFFF6B6B);
-    canvas.drawCircle(
-      Offset(size.x / 2, size.y / 2),
-      size.x / 2,
-      paint,
-    );
-
-    // Olhos simples
-    final eyePaint = Paint()..color = Colors.white;
-    canvas.drawCircle(const Offset(14, 16), 6, eyePaint);
-    canvas.drawCircle(const Offset(34, 16), 6, eyePaint);
-
-    final pupilPaint = Paint()..color = Colors.black;
-    canvas.drawCircle(const Offset(14, 16), 3, pupilPaint);
-    canvas.drawCircle(const Offset(34, 16), 3, pupilPaint);
-
-    // Sorriso
-    final smilePaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    canvas.drawArc(
-      Rect.fromCenter(center: const Offset(24, 28), width: 20, height: 12),
-      0,
-      3.14,
-      false,
-      smilePaint,
-    );
+  Future<void> onLoad() async {
+    await super.onLoad();
+    sprite = await game.loadSprite('characters/player/mundo_idle.png');
   }
 
   void moveTo(Vector2 target) {

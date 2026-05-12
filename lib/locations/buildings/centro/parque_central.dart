@@ -27,14 +27,10 @@ class ParqueCentralArea extends PositionComponent {
   final void Function(String interactionType, Vector2 position)? onInteract;
 
   ParqueCentralArea({
-    required Vector2 position,
-    required Vector2 size,
+    required super.position,
+    required super.size,
     this.onInteract,
-  }) : super(
-          position: position,
-          size: size,
-          anchor: Anchor.topLeft,
-        );
+  }) : super(anchor: Anchor.topLeft);
 
   @override
   Future<void> onLoad() async {
@@ -49,7 +45,7 @@ class ParqueCentralArea extends PositionComponent {
       ),
     );
 
-    // Árvores decorativas (círculos verdes)
+    // Árvores decorativas
     final treePositions = [
       Vector2(30, 30),
       Vector2(size.x - 50, 40),
@@ -91,72 +87,37 @@ class ParqueCentralArea extends PositionComponent {
       );
 }
 
-/// Árvore decorativa (placeholder visual).
-class TreeDecoration extends PositionComponent {
-  TreeDecoration({required Vector2 position})
+/// Árvore decorativa usando sprite.
+class TreeDecoration extends SpriteComponent with HasGameReference {
+  TreeDecoration({required super.position})
       : super(
-          position: position,
-          size: Vector2.all(36),
+          size: Vector2.all(48),
           anchor: Anchor.center,
         );
 
   @override
-  void render(Canvas canvas) {
-    // Tronco
-    final trunkPaint = Paint()..color = const Color(0xFF795548);
-    canvas.drawRect(
-      Rect.fromCenter(center: Offset(size.x / 2, size.y - 8), width: 8, height: 16),
-      trunkPaint,
-    );
-
-    // Copa
-    final leafPaint = Paint()..color = const Color(0xFF2E7D32);
-    canvas.drawCircle(
-      Offset(size.x / 2, size.y / 2 - 4),
-      size.x / 2.2,
-      leafPaint,
-    );
+  Future<void> onLoad() async {
+    await super.onLoad();
+    sprite = await game.loadSprite('buildings/arvore.png');
   }
 }
 
-/// Banco interativo.
-class Banco extends PositionComponent with TapCallbacks {
+/// Banco interativo usando sprite.
+class Banco extends SpriteComponent with TapCallbacks, HasGameReference {
   final VoidCallback onTap;
 
   Banco({
-    required Vector2 position,
+    required super.position,
     required this.onTap,
   }) : super(
-          position: position,
-          size: Vector2(50, 24),
+          size: Vector2(50, 30),
           anchor: Anchor.center,
         );
 
   @override
-  void render(Canvas canvas) {
-    // Assento
-    final seatPaint = Paint()..color = const Color(0xFF8D6E63);
-    canvas.drawRect(
-      Rect.fromCenter(center: Offset(size.x / 2, size.y / 2 - 2), width: size.x, height: 10),
-      seatPaint,
-    );
-
-    // Encosto
-    canvas.drawRect(
-      Rect.fromCenter(center: Offset(size.x / 2, size.y / 2 - 10), width: size.x, height: 6),
-      seatPaint,
-    );
-
-    // Pernas
-    final legPaint = Paint()..color = const Color(0xFF5D4037);
-    canvas.drawRect(
-      Rect.fromCenter(center: Offset(6, size.y - 4), width: 4, height: 8),
-      legPaint,
-    );
-    canvas.drawRect(
-      Rect.fromCenter(center: Offset(size.x - 6, size.y - 4), width: 4, height: 8),
-      legPaint,
-    );
+  Future<void> onLoad() async {
+    await super.onLoad();
+    sprite = await game.loadSprite('buildings/banco.png');
   }
 
   @override
@@ -166,54 +127,22 @@ class Banco extends PositionComponent with TapCallbacks {
   }
 }
 
-/// Escorregador interativo.
-class Escorregador extends PositionComponent with TapCallbacks {
+/// Escorregador interativo usando sprite.
+class Escorregador extends SpriteComponent with TapCallbacks, HasGameReference {
   final VoidCallback onTap;
 
   Escorregador({
-    required Vector2 position,
+    required super.position,
     required this.onTap,
   }) : super(
-          position: position,
           size: Vector2(60, 80),
           anchor: Anchor.center,
         );
 
   @override
-  void render(Canvas canvas) {
-    // Escada (lado esquerdo)
-    final ladderPaint = Paint()..color = const Color(0xFF78909C);
-    canvas.drawRect(
-      Rect.fromLTWH(4, 0, 6, size.y),
-      ladderPaint,
-    );
-
-    // Degraus
-    for (int i = 0; i < 5; i++) {
-      canvas.drawRect(
-        Rect.fromLTWH(0, 10 + i * 14, 14, 3),
-        ladderPaint,
-      );
-    }
-
-    // Rampa (diagonal)
-    final slidePaint = Paint()
-      ..color = const Color(0xFF29B6F6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 10
-      ..strokeCap = StrokeCap.round;
-
-    final path = Path()
-      ..moveTo(20, 0)
-      ..lineTo(size.x - 4, size.y - 10);
-    canvas.drawPath(path, slidePaint);
-
-    // Topo da rampa
-    final topPaint = Paint()..color = const Color(0xFF0288D1);
-    canvas.drawRect(
-      Rect.fromLTWH(16, -2, 12, 6),
-      topPaint,
-    );
+  Future<void> onLoad() async {
+    await super.onLoad();
+    sprite = await game.loadSprite('buildings/escorregador.png');
   }
 
   @override
@@ -223,11 +152,10 @@ class Escorregador extends PositionComponent with TapCallbacks {
   }
 }
 
-/// Fonte com partículas de água animadas.
-class Fonte extends PositionComponent {
-  Fonte({required Vector2 position})
+/// Fonte com partículas de água animadas usando sprite.
+class Fonte extends SpriteComponent with HasGameReference {
+  Fonte({required super.position})
       : super(
-          position: position,
           size: Vector2(60, 60),
           anchor: Anchor.center,
         );
@@ -238,6 +166,7 @@ class Fonte extends PositionComponent {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
+    sprite = await game.loadSprite('buildings/fonte_parque.png');
   }
 
   @override
@@ -257,7 +186,7 @@ class Fonte extends PositionComponent {
     for (final particle in _particles) {
       particle.y -= particle.speed * dt;
       particle.life -= dt;
-      particle.speed *= 0.98; // desacelera
+      particle.speed *= 0.98;
     }
 
     _particles.removeWhere((p) => p.life <= 0);
@@ -265,21 +194,9 @@ class Fonte extends PositionComponent {
 
   @override
   void render(Canvas canvas) {
-    // Base da fonte
-    final basePaint = Paint()..color = const Color(0xFFB0BEC5);
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(size.x / 2, size.y / 2 + 8), width: size.x, height: 24),
-      basePaint,
-    );
+    super.render(canvas);
 
-    // Topo da fonte (pilastra)
-    final pillarPaint = Paint()..color = const Color(0xFF90A4AE);
-    canvas.drawRect(
-      Rect.fromCenter(center: Offset(size.x / 2, size.y / 2 - 4), width: 14, height: 20),
-      pillarPaint,
-    );
-
-    // Partículas de água
+    // Partículas de água sobre o sprite
     for (final particle in _particles) {
       final alpha = (particle.life / 1.2 * 255).clamp(0, 255).toInt();
       final waterPaint = Paint()

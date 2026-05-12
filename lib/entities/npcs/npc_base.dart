@@ -1,14 +1,14 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
-import 'package:flutter/material.dart';
 
 /// Estados possíveis de um NPC.
 enum NpcState { idle, walking, interacting }
 
 /// Classe base abstrata para todos os NPCs do jogo.
-abstract class NpcBase extends PositionComponent with TapCallbacks {
+abstract class NpcBase extends SpriteComponent with TapCallbacks, HasGameReference {
   final String nome;
   final List<String> dialogos;
   NpcState estado = NpcState.idle;
@@ -23,17 +23,27 @@ abstract class NpcBase extends PositionComponent with TapCallbacks {
   // Área de patrulha (bounds)
   final Rect? patrolBounds;
 
+  /// Caminho do sprite no assets/images/ (ex: 'characters/npcs/prefeito_tico.png')
+  final String spritePath;
+
   NpcBase({
     required this.nome,
     required this.dialogos,
     required Vector2 position,
+    required this.spritePath,
     Vector2? size,
     this.patrolBounds,
   }) : super(
           position: position,
-          size: size ?? Vector2.all(40),
+          size: size ?? Vector2.all(64),
           anchor: Anchor.center,
         );
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+    sprite = await game.loadSprite(spritePath);
+  }
 
   /// Chamado quando o jogador interage com o NPC.
   void onInteract();
