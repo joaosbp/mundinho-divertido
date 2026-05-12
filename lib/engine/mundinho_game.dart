@@ -7,17 +7,23 @@ import '../core/services/audio_service.dart';
 import '../core/services/save_service.dart';
 import '../entities/npcs/cidadao_parque.dart';
 import '../entities/npcs/npc_base.dart';
+import '../entities/npcs/prefeito_tico.dart';
 import '../entities/player/player.dart';
 import '../locations/buildings/centro/casa_jogador.dart';
 import '../locations/buildings/centro/mercadao.dart';
 import '../locations/buildings/centro/padaria.dart';
 import '../locations/buildings/centro/parque_central.dart';
+import '../locations/buildings/centro/prefeitura.dart';
 import '../locations/location_manager.dart';
+import '../missions/definitions/arc1/t1_bem_vindo.dart';
+import '../missions/mission_base.dart';
+import '../missions/mission_manager.dart';
 import '../ui/dialogs/npc_dialogue.dart';
 
 import 'interior_scene.dart';
 import 'mercadao_interior_scene.dart';
 import 'padaria_interior_scene.dart';
+import 'prefeitura_interior_scene.dart';
 
 /// FlameGame principal do Mundinho Divertido.
 ///
@@ -68,6 +74,15 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   bool _padariaHintAdded = false;
   PadariaInteriorScene? _padariaInteriorScene;
 
+  // Prefeitura
+  late PrefeituraExterior _prefeituraExterior;
+  final Vector2 _prefeituraPosition = Vector2(1300, 200);
+  static const double _prefeituraEnterDistance = 100.0;
+  bool _nearPrefeitura = false;
+  late TextComponent _prefeituraHint;
+  bool _prefeituraHintAdded = false;
+  PrefeituraInteriorScene? _prefeituraInteriorScene;
+
   // NPC
   late CidadaoParque _cidadao;
 
@@ -75,12 +90,21 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   NpcDialogueOverlay? _dialogueOverlay;
   bool _isDialogueOpen = false;
 
+  // Diálogo com Prefeito Tico (múltiplas falas)
+
+  // Missão tutorial
+  final MissionManager _missionManager = MissionManager();
+  bool _tutorialStarted = false;
+  bool _visitedCasaDuringTutorial = false;
+  bool _visitedParqueDuringTutorial = false;
+  late TextComponent _missionHud;
+  bool _missionHudAdded = false;
+
   // Player animation states
   bool _isSitting = false;
   double _sitTimer = 0;
   bool _isSliding = false;
   double _slideTimer = 0;
-  Vector2? _slideTarget;
   static const double _slideDuration = 1.5;
   static const double _sitDuration = 3.0;
   Vector2? _preSitPosition;
@@ -133,6 +157,10 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     await world.add(_padariaExterior);
     _padariaCheirinho = CheirinhoParticles(position: _padariaPosition + Vector2(0, -20));
     await world.add(_padariaCheirinho);
+
+    // Adicionar Prefeitura ao mundo
+    _prefeituraExterior = PrefeituraExterior(position: _prefeituraPosition);
+    await world.add(_prefeituraExterior);
 
     // Adicionar NPC ao parque
     _cidadao = CidadaoParque(
@@ -214,6 +242,43 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       ),
     );
 
+    // Dica da Prefeitura
+    _prefeituraHint = TextComponent(
+      text: 'Entrar',
+      position: _prefeituraPosition + Vector2(0, -100),
+      anchor: Anchor.center,
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(color: Colors.black87, blurRadius: 4),
+          ],
+        ),
+      ),
+    );
+
+    // HUD de missão ativa
+    _missionHud = TextComponent(
+      text: '',
+      position: Vector2(16, 16),
+      anchor: Anchor.topLeft,
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.amber,
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(color: Colors.black87, blurRadius: 3),
+          ],
+        ),
+      ),
+    );
+
+    // Registrar missão tutorial
+    _missionManager.register(TBemVindo());
+
     // Carregar save
     final save = SaveService();
     if (save.isInitialized) {
@@ -261,6 +326,11 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       _parqueHintAdded = false;
     }
 
+    // Tracker de missão: visitou parque
+    if (_nearParque) {
+      _checkVisitLocation('parque_central');
+    }
+
     // Detectar proximidade com mercadão
     final distMercadao = _player.position.distanceTo(_mercadaoPosition);
     _nearMercadao = distMercadao < _mercadaoEnterDistance;
@@ -285,6 +355,18 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       _padariaHintAdded = false;
     }
 
+    // Detectar proximidade com prefeitura
+    final distPrefeitura = _player.position.distanceTo(_prefeituraPosition);
+    _nearPrefeitura = distPrefeitura < _prefeituraEnterDistance;
+
+    if (_nearPrefeitura && !_prefeituraHintAdded) {
+      world.add(_prefeituraHint);
+      _prefeituraHintAdded = true;
+    } else if (!_nearPrefeitura && _prefeituraHintAdded) {
+      _prefeituraHint.removeFromParent();
+      _prefeituraHintAdded = false;
+    }
+
     // Player sitting animation
     if (_isSitting) {
       _sitTimer += dt;
@@ -306,10 +388,8 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       if (_slideTimer >= _slideDuration) {
         _isSliding = false;
         _slideTimer = 0;
-        _slideTarget = null;
       } else {
         // Slide movement (fast, downward)
-        final progress = _slideTimer / _slideDuration;
         final slideDirection = Vector2(0.3, 1); // slide down-right
         _player.position += slideDirection * 120 * dt;
       }
@@ -366,6 +446,19 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       );
       if (padariaRect.contains(Offset(worldPos.x, worldPos.y))) {
         _enterPadariaInterior();
+        return;
+      }
+    }
+
+    // Verificar toque na prefeitura quando próximo
+    if (_nearPrefeitura) {
+      final prefeituraRect = Rect.fromCenter(
+        center: Offset(_prefeituraPosition.x, _prefeituraPosition.y),
+        width: _prefeituraExterior.size.x,
+        height: _prefeituraExterior.size.y,
+      );
+      if (prefeituraRect.contains(Offset(worldPos.x, worldPos.y))) {
+        _enterPrefeituraInterior();
         return;
       }
     }
@@ -459,6 +552,10 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
       _padariaHint.removeFromParent();
       _padariaHintAdded = false;
     }
+    if (_prefeituraHintAdded) {
+      _prefeituraHint.removeFromParent();
+      _prefeituraHintAdded = false;
+    }
   }
 
   /// Transiciona para o interior da Casa do Jogador.
@@ -476,6 +573,9 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     );
     camera.viewport.add(_interiorScene!);
     _interiorScene!.enter();
+
+    // Tracker de missão: visitou casa
+    _checkVisitLocation('casa_jogador');
   }
 
   /// Sai do interior e volta ao mundo.
@@ -550,6 +650,175 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     _player.position = _padariaPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
+  }
+
+  /// Transiciona para o interior da Prefeitura.
+  void _enterPrefeituraInterior() {
+    _inInterior = true;
+    _removeAllHints();
+
+    LocationManager().enter('prefeitura');
+
+    // Inicia missão tutorial automaticamente na primeira vez
+    if (!_tutorialStarted) {
+      _tutorialStarted = true;
+      _missionManager.start('t1_bem_vindo');
+      _updateMissionHud();
+    }
+
+    _prefeituraInteriorScene = PrefeituraInteriorScene(
+      size: camera.viewport.size,
+      onExit: _exitPrefeituraInterior,
+      onNpcInteract: _onPrefeitoTicoInteract,
+    );
+    camera.viewport.add(_prefeituraInteriorScene!);
+    _prefeituraInteriorScene!.enter();
+  }
+
+  /// Sai do interior da Prefeitura e volta ao mundo.
+  void _exitPrefeituraInterior() {
+    if (_prefeituraInteriorScene == null) return;
+
+    camera.viewport.remove(_prefeituraInteriorScene!);
+    _prefeituraInteriorScene = null;
+    _inInterior = false;
+
+    LocationManager().exit('prefeitura');
+
+    _player.position = _prefeituraPosition + Vector2(0, 100);
+    _player.moveTo(_player.position);
+  }
+
+  /// Chamado quando o jogador interage com o Prefeito Tico.
+  void _onPrefeitoTicoInteract(NpcBase npc) {
+    if (_isDialogueOpen) return;
+
+    final mission = _missionManager.get('t1_bem_vindo');
+    final stepIndex = _missionManager.exportProgress().steps['t1_bem_vindo'];
+
+    // Determina qual diálogo mostrar baseado no progresso da missão
+    String texto;
+    if (mission != null && stepIndex != null) {
+      if (stepIndex == 0) {
+        // Passo 1: primeira conversa com Tico
+        texto = (npc as PrefeitoTico).proximoDialogo;
+        _missionManager.advanceStep('t1_bem_vindo');
+        _updateMissionHud();
+      } else if (stepIndex == 1) {
+        // Passo 2: precisa visitar locais primeiro
+        if (_visitedCasaDuringTutorial && _visitedParqueDuringTutorial) {
+          texto = 'Incrível! Você já explorou a cidade! Vamos completar sua missão.';
+          _missionManager.advanceStep('t1_bem_vindo');
+          _updateMissionHud();
+        } else {
+          final faltam = <String>[];
+          if (!_visitedCasaDuringTutorial) faltam.add('Casa');
+          if (!_visitedParqueDuringTutorial) faltam.add('Parque');
+          texto = 'Ainda falta visitar: ${faltam.join(' e ')}. Volte quando terminar!';
+        }
+      } else if (stepIndex == 2) {
+        // Passo 3: conversa final
+        texto = 'Parabéns! Você completou a missão! Aqui está sua recompensa.';
+        final rewards = _missionManager.complete('t1_bem_vindo');
+        _showRewardFeedback(rewards);
+        _updateMissionHud();
+      } else {
+        texto = 'Obrigado por ajudar o Mundinho!';
+      }
+    } else {
+      // Missão não iniciada — mostra diálogo genérico
+      texto = (npc as PrefeitoTico).proximoDialogo;
+    }
+
+    _isDialogueOpen = true;
+    npc.estado = NpcState.interacting;
+
+    _dialogueOverlay = NpcDialogueOverlay(
+      npcName: npc.nome,
+      text: texto,
+      onClose: () => _closePrefeitoDialogue(npc),
+      size: camera.viewport.size,
+      avatarColor: const Color(0xFF7B1FA2),
+    );
+
+    camera.viewport.add(_dialogueOverlay!);
+    _dialogueOverlay!.show();
+  }
+
+  void _closePrefeitoDialogue(NpcBase npc) {
+    if (_dialogueOverlay == null) return;
+
+    camera.viewport.remove(_dialogueOverlay!);
+    _dialogueOverlay = null;
+    _isDialogueOpen = false;
+    npc.estado = NpcState.idle;
+  }
+
+  /// Verifica se o jogador está visitando um local para a missão tutorial.
+  void _checkVisitLocation(String locationId) {
+    final stepIndex = _missionManager.exportProgress().steps['t1_bem_vindo'];
+    if (stepIndex == 1) {
+      if (locationId == 'casa_jogador') {
+        _visitedCasaDuringTutorial = true;
+      } else if (locationId == 'parque_central') {
+        _visitedParqueDuringTutorial = true;
+      }
+      _updateMissionHud();
+    }
+  }
+
+  /// Atualiza o HUD de missão ativa.
+  void _updateMissionHud() {
+    final inProgress = _missionManager.inProgressMissions;
+    if (inProgress.isEmpty) {
+      if (_missionHudAdded) {
+        _missionHud.removeFromParent();
+        _missionHudAdded = false;
+      }
+      return;
+    }
+
+    final mission = inProgress.first;
+    final stepIndex = _missionManager.exportProgress().steps[mission.id] ?? 0;
+    final stepDesc = stepIndex < mission.steps.length
+        ? mission.steps[stepIndex].description
+        : 'Finalizando...';
+
+    _missionHud.text = '⭐ Missão: ${mission.title}\n🎯 $stepDesc';
+
+    if (!_missionHudAdded) {
+      camera.viewport.add(_missionHud);
+      _missionHudAdded = true;
+    }
+  }
+
+  /// Mostra feedback visual da recompensa.
+  void _showRewardFeedback(List<MissionReward> rewards) {
+    final totalStars = rewards.fold(0, (sum, r) => sum + r.stars);
+    final totalCoins = rewards.fold(0, (sum, r) => sum + r.coins);
+
+    final feedback = TextComponent(
+      text: '🎉 Missão completa! +$totalStars⭐ +$totalCoins🪙',
+      position: camera.viewport.size / 2,
+      anchor: Anchor.center,
+      textRenderer: TextPaint(
+        style: const TextStyle(
+          color: Colors.amber,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          shadows: [
+            Shadow(color: Colors.black87, blurRadius: 4),
+          ],
+        ),
+      ),
+    );
+
+    camera.viewport.add(feedback);
+
+    // Auto-remove após 3 segundos
+    Future.delayed(const Duration(seconds: 3), () {
+      feedback.removeFromParent();
+    });
   }
 
   Component _buildWorld() {

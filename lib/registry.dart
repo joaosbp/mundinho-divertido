@@ -9,6 +9,7 @@ import 'minigames/games/puzzle/organizar_cidade.dart';
 import 'minigames/games/sequence/padeiro_mirim.dart';
 import 'minigames/minigame_manager.dart';
 import 'missions/definitions/arc1/m1_bolo_vovo_maria.dart';
+import 'missions/definitions/arc1/t1_bem_vindo.dart';
 import 'missions/mission_manager.dart';
 
 /// Registra todos os locais, mini-jogos e missões no startup.
@@ -39,5 +40,7 @@ void registerAllContent() {
     );
 
   // ─── Missões ───
-  MissionManager().register(MBoloVovoMaria());
+  MissionManager()
+    ..register(TBemVindo())
+    ..register(MBoloVovoMaria());
 }
