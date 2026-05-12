@@ -56,7 +56,7 @@ class SettingsData extends HiveObject {
         colorBlindMode: false,
         analyticsEnabled: false, // opt-in por padrão (LGPD/COPPA)
         crashReportingEnabled: false, // opt-in por padrão
-        language: 'pt_BR',
+        language: 'pt',
       );
 
   SettingsData copyWith({
@@ -80,13 +80,40 @@ class SettingsData extends HiveObject {
       highContrast: highContrast ?? this.highContrast,
       colorBlindMode: colorBlindMode ?? this.colorBlindMode,
       analyticsEnabled: analyticsEnabled ?? this.analyticsEnabled,
-      crashReportingEnabled: crashReportingEnabled ?? this.crashReportingEnabled,
+      crashReportingEnabled:
+          crashReportingEnabled ?? this.crashReportingEnabled,
       language: language ?? this.language,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'soundOn': soundOn,
+        'musicOn': musicOn,
+        'vibrationOn': vibrationOn,
+        'narrationOn': narrationOn,
+        'textSizeScale': textSizeScale,
+        'highContrast': highContrast,
+        'colorBlindMode': colorBlindMode,
+        'analyticsEnabled': analyticsEnabled,
+        'crashReportingEnabled': crashReportingEnabled,
+        'language': language,
+      };
+
+  factory SettingsData.fromJson(Map<String, dynamic> json) => SettingsData(
+        soundOn: json['soundOn'] as bool? ?? true,
+        musicOn: json['musicOn'] as bool? ?? true,
+        vibrationOn: json['vibrationOn'] as bool? ?? true,
+        narrationOn: json['narrationOn'] as bool? ?? true,
+        textSizeScale: (json['textSizeScale'] as num?)?.toDouble() ?? 1.0,
+        highContrast: json['highContrast'] as bool? ?? false,
+        colorBlindMode: json['colorBlindMode'] as bool? ?? false,
+        analyticsEnabled: json['analyticsEnabled'] as bool? ?? false,
+        crashReportingEnabled: json['crashReportingEnabled'] as bool? ?? false,
+        language: json['language'] as String? ?? 'pt',
+      );
 }
 
-// Placeholder adapter
+/// TypeAdapter manual para Hive (sem build_runner).
 class SettingsDataAdapter extends TypeAdapter<SettingsData> {
   @override
   final int typeId = 1;
@@ -143,5 +170,7 @@ class SettingsDataAdapter extends TypeAdapter<SettingsData> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is SettingsDataAdapter && runtimeType == other.runtimeType && typeId == other.typeId;
+      other is SettingsDataAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
 }

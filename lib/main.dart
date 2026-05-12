@@ -1,16 +1,12 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'core/services/analytics_service.dart';
-import 'core/services/audio_service.dart';
-import 'core/services/save_service.dart';
-import 'engine/mundinho_game.dart';
 import 'registry.dart';
-import 'screens/menu_screen.dart';
+import 'ui/screens/loading_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,10 +22,6 @@ Future<void> main() async {
       return true;
     };
   }
-
-  // Serviços locais
-  await SaveService().initialize();
-  await AudioService().initialize();
 
   // Analytics desabilitado por padrão (opt-in LGPD/COPPA)
   AnalyticsService().setEnabled(false);
@@ -56,7 +48,7 @@ class MundinhoDivertidoApp extends StatelessWidget {
         textTheme: GoogleFonts.fredokaTextTheme(),
         useMaterial3: true,
       ),
-      home: const MenuScreen(),
+      home: const LoadingScreen(),
     );
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../core/services/audio_service.dart';
 import '../core/services/save_service.dart';
+import '../models/player_data.dart';
 import '../entities/npcs/cidadao_parque.dart';
 import '../entities/npcs/npc_base.dart';
 import '../entities/npcs/prefeito_tico.dart';
@@ -146,6 +149,9 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
   // HUD
   MainHud? _mainHud;
+
+  // Dados do jogador (mantidos em memória, sincronizados com Hive)
+  late PlayerData _playerData;
 
   // Inventário
   final List<InventoryItem> _inventoryItems = [];
@@ -410,10 +416,16 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     if (!save.isInitialized) {
       await save.initialize();
     }
-    // TODO: aplicar dados salvos (posição, aparência, etc.)
+    _playerData = save.loadPlayerData();
+
+    // Converter IDs de inventário salvo para InventoryItem
+    _syncInventoryFromSave();
 
     // Inicializar HUD
     _initHud();
+
+    // Iniciar auto-save a cada 30s
+    _startAutoSave();
 
     // Áudio ambiente
     AudioService().playMusic('ambient');
@@ -809,6 +821,9 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     // Reposiciona jogador em frente à casa
     _player.position = _casaPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
+
+    // Salva ao sair do local
+    _saveGame();
   }
 
   /// Transiciona para o interior do Mercadão.
@@ -838,6 +853,8 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     _player.position = _mercadaoPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
+
+    _saveGame();
   }
 
   /// Transiciona para o interior da Padaria.
@@ -867,6 +884,8 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     _player.position = _padariaPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
+
+    _saveGame();
   }
 
   /// Transiciona para o interior da Prefeitura.
@@ -904,6 +923,8 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     _player.position = _prefeituraPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
+
+    _saveGame();
   }
 
   /// Transiciona para o interior dos Correios.
@@ -933,6 +954,8 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     _player.position = _correiosPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
+
+    _saveGame();
   }
 
   /// Transiciona para o interior da Farmácia.
@@ -962,6 +985,8 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     _player.position = _farmaciaPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
+
+    _saveGame();
   }
 
   /// Transiciona para o interior da Escola.
@@ -991,6 +1016,8 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
     _player.position = _escolaPosition + Vector2(0, 100);
     _player.moveTo(_player.position);
+
+    _saveGame();
   }
 
   /// Chamado quando o jogador interage com o Prefeito Tico.
@@ -1100,10 +1127,21 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   void _showRewardFeedback(List<MissionReward> rewards) {
     final totalStars = rewards.fold(0, (sum, r) => sum + r.stars);
     final totalCoins = rewards.fold(0, (sum, r) => sum + r.coins);
+
+    // Atualiza dados do jogador com as recompensas
+    _playerData = _playerData.copyWith(
+      coins: _playerData.coins + totalCoins,
+      stars: _playerData.stars + totalStars,
+    );
+    _updateHudValues();
+
     _showToast(
       '🎉 Missão completa! +$totalStars⭐ +$totalCoins🪙',
       type: ToastType.mission,
     );
+
+    // Salva após ganhar recompensa
+    _saveGame();
   }
 
   Component _buildWorld() {
@@ -1141,12 +1179,115 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
 
   // ─── UI Integration ───
 
+  // ─── Save / Load helpers ───
+
+  void _syncInventoryFromSave() {
+    _inventoryItems.clear();
+    for (final id in _playerData.inventory) {
+      _inventoryItems.add(_inventoryItemFromId(id));
+    }
+  }
+
+  InventoryItem _inventoryItemFromId(String id) {
+    // Mapeamento básico de IDs para itens
+    switch (id) {
+      case 'sticker_star':
+        return const InventoryItem(
+          id: 'sticker_star',
+          name: 'Estrela Dourada',
+          type: InventoryItemType.sticker,
+          description: 'Uma estrela brilhante!',
+        );
+      case 'recipe_bolo':
+        return const InventoryItem(
+          id: 'recipe_bolo',
+          name: 'Receita do Bolo',
+          type: InventoryItemType.recipe,
+          description: 'Receita secreta da Vovó Maria.',
+        );
+      default:
+        return InventoryItem(
+          id: id,
+          name: id,
+          type: InventoryItemType.collectible,
+        );
+    }
+  }
+
+  /// Atualiza o [PlayerData] em memória e salva no Hive.
+  Future<void> _saveGame() async {
+    _playerData = _playerData.copyWith(
+      lastPlayed: DateTime.now(),
+    );
+    await SaveService().savePlayerData(_playerData);
+  }
+
+  /// Salva o jogo e mostra toast de confirmação.
+  Future<void> _saveAndShowToast() async {
+    await _saveGame();
+    _showToast('Jogo salvo! 💾', type: ToastType.info);
+  }
+
+  /// Chamado quando um mini-jogo é completado.
+  void onCompleteMiniGame(String miniGameId, {int score = 0}) {
+    final updatedCompleted = List<String>.from(_playerData.completedMiniGames);
+    if (!updatedCompleted.contains(miniGameId)) {
+      updatedCompleted.add(miniGameId);
+    }
+
+    final updatedScores = Map<String, int>.from(_playerData.miniGameHighScores);
+    final currentBest = updatedScores[miniGameId] ?? 0;
+    if (score > currentBest) {
+      updatedScores[miniGameId] = score;
+    }
+
+    _playerData = _playerData.copyWith(
+      completedMiniGames: updatedCompleted,
+      miniGameHighScores: updatedScores,
+    );
+
+    _updateHudValues();
+    _saveAndShowToast();
+  }
+
+  /// Adiciona um item ao inventário e salva.
+  void addInventoryItem(String itemId) {
+    final updated = List<String>.from(_playerData.inventory);
+    if (!updated.contains(itemId)) {
+      updated.add(itemId);
+    }
+    _playerData = _playerData.copyWith(inventory: updated);
+    _syncInventoryFromSave();
+    _updateHudValues();
+    _saveGame();
+  }
+
+  /// Atualiza coins e stars no HUD.
+  void _updateHudValues() {
+    _mainHud?.updateValues(
+      newCoins: _playerData.coins,
+      newStars: _playerData.stars,
+    );
+  }
+
+  void _startAutoSave() {
+    SaveService().onAutoSave = () {
+      _showToast('Jogo salvo! 💾', type: ToastType.info);
+    };
+    SaveService().startAutoSave(() => _playerData);
+  }
+
+  void _stopAutoSave() {
+    SaveService().stopAutoSave();
+    SaveService().onAutoSave = null;
+  }
+
   void _initHud() {
     _mainHud = MainHud(
       size: camera.viewport.size,
-      playerName: SaveService().playerData.playerName,
-      coins: SaveService().playerData.coins,
-      stars: SaveService().playerData.stars,
+      playerName: _playerData.playerName,
+      coins: _playerData.coins,
+      stars: _playerData.stars,
       onPausePressed: _openPauseMenu,
       onInventoryPressed: _openInventory,
       onMissionsPressed: _toggleMissionHud,
@@ -1285,6 +1426,12 @@ class MundinhoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   void resumeGame() {
     resumeEngine();
     AudioService().playMusic('ambient');
+  }
+
+  @override
+  void onRemove() {
+    _stopAutoSave();
+    super.onRemove();
   }
 }
 

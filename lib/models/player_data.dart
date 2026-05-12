@@ -1,5 +1,7 @@
 import 'package:hive/hive.dart';
 
+import 'settings_data.dart';
+
 /// Dados salvos do jogador.
 @HiveType(typeId: 0)
 class PlayerData extends HiveObject {
@@ -33,6 +35,18 @@ class PlayerData extends HiveObject {
   @HiveField(9)
   Map<String, int> npcFriendship;
 
+  @HiveField(10)
+  List<String> inventory;
+
+  @HiveField(11)
+  List<String> visitedLocations;
+
+  @HiveField(12)
+  List<String> completedMiniGames;
+
+  @HiveField(13)
+  SettingsData settings;
+
   PlayerData({
     required this.playerName,
     required this.coins,
@@ -44,6 +58,10 @@ class PlayerData extends HiveObject {
     required this.lastPlayed,
     required this.totalPlayTimeMinutes,
     required this.npcFriendship,
+    required this.inventory,
+    required this.visitedLocations,
+    required this.completedMiniGames,
+    required this.settings,
   });
 
   factory PlayerData.defaultData() => PlayerData(
@@ -57,6 +75,10 @@ class PlayerData extends HiveObject {
         lastPlayed: DateTime.now(),
         totalPlayTimeMinutes: 0,
         npcFriendship: {},
+        inventory: [],
+        visitedLocations: [],
+        completedMiniGames: [],
+        settings: SettingsData.defaultData(),
       );
 
   PlayerData copyWith({
@@ -70,6 +92,10 @@ class PlayerData extends HiveObject {
     DateTime? lastPlayed,
     int? totalPlayTimeMinutes,
     Map<String, int>? npcFriendship,
+    List<String>? inventory,
+    List<String>? visitedLocations,
+    List<String>? completedMiniGames,
+    SettingsData? settings,
   }) {
     return PlayerData(
       playerName: playerName ?? this.playerName,
@@ -82,12 +108,66 @@ class PlayerData extends HiveObject {
       lastPlayed: lastPlayed ?? this.lastPlayed,
       totalPlayTimeMinutes: totalPlayTimeMinutes ?? this.totalPlayTimeMinutes,
       npcFriendship: npcFriendship ?? Map.from(this.npcFriendship),
+      inventory: inventory ?? List.from(this.inventory),
+      visitedLocations: visitedLocations ?? List.from(this.visitedLocations),
+      completedMiniGames: completedMiniGames ?? List.from(this.completedMiniGames),
+      settings: settings ?? this.settings.copyWith(),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'playerName': playerName,
+        'coins': coins,
+        'stars': stars,
+        'unlockedLocations': unlockedLocations,
+        'completedMissions': completedMissions,
+        'collectedStickers': collectedStickers,
+        'miniGameHighScores': miniGameHighScores,
+        'lastPlayed': lastPlayed.toIso8601String(),
+        'totalPlayTimeMinutes': totalPlayTimeMinutes,
+        'npcFriendship': npcFriendship,
+        'inventory': inventory,
+        'visitedLocations': visitedLocations,
+        'completedMiniGames': completedMiniGames,
+        'settings': settings.toJson(),
+      };
+
+  factory PlayerData.fromJson(Map<String, dynamic> json) => PlayerData(
+        playerName: json['playerName'] as String? ?? 'Jogador',
+        coins: json['coins'] as int? ?? 0,
+        stars: json['stars'] as int? ?? 0,
+        unlockedLocations: (json['unlockedLocations'] as List<dynamic>?)
+                ?.cast<String>() ??
+            ['casa_jogador', 'praca_central'],
+        completedMissions:
+            (json['completedMissions'] as List<dynamic>?)?.cast<String>() ?? [],
+        collectedStickers:
+            (json['collectedStickers'] as List<dynamic>?)?.cast<String>() ?? [],
+        miniGameHighScores:
+            (json['miniGameHighScores'] as Map<String, dynamic>?)
+                    ?.cast<String, int>() ??
+                {},
+        lastPlayed: DateTime.tryParse(json['lastPlayed'] as String? ?? '') ??
+            DateTime.now(),
+        totalPlayTimeMinutes: json['totalPlayTimeMinutes'] as int? ?? 0,
+        npcFriendship: (json['npcFriendship'] as Map<String, dynamic>?)
+                ?.cast<String, int>() ??
+            {},
+        inventory:
+            (json['inventory'] as List<dynamic>?)?.cast<String>() ?? [],
+        visitedLocations:
+            (json['visitedLocations'] as List<dynamic>?)?.cast<String>() ?? [],
+        completedMiniGames:
+            (json['completedMiniGames'] as List<dynamic>?)?.cast<String>() ??
+                [],
+        settings: json['settings'] != null
+            ? SettingsData.fromJson(
+                json['settings'] as Map<String, dynamic>)
+            : SettingsData.defaultData(),
+      );
 }
 
-// Placeholder adapter — será gerado via build_runner
-// Comando: flutter packages pub run build_runner build
+/// TypeAdapter manual para Hive (sem build_runner).
 class PlayerDataAdapter extends TypeAdapter<PlayerData> {
   @override
   final int typeId = 0;
@@ -109,13 +189,17 @@ class PlayerDataAdapter extends TypeAdapter<PlayerData> {
       lastPlayed: fields[7] as DateTime,
       totalPlayTimeMinutes: fields[8] as int,
       npcFriendship: (fields[9] as Map).cast<String, int>(),
+      inventory: (fields[10] as List?)?.cast<String>() ?? [],
+      visitedLocations: (fields[11] as List?)?.cast<String>() ?? [],
+      completedMiniGames: (fields[12] as List?)?.cast<String>() ?? [],
+      settings: fields[13] as SettingsData? ?? SettingsData.defaultData(),
     );
   }
 
   @override
   void write(BinaryWriter writer, PlayerData obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(14)
       ..writeByte(0)
       ..write(obj.playerName)
       ..writeByte(1)
@@ -135,7 +219,15 @@ class PlayerDataAdapter extends TypeAdapter<PlayerData> {
       ..writeByte(8)
       ..write(obj.totalPlayTimeMinutes)
       ..writeByte(9)
-      ..write(obj.npcFriendship);
+      ..write(obj.npcFriendship)
+      ..writeByte(10)
+      ..write(obj.inventory)
+      ..writeByte(11)
+      ..write(obj.visitedLocations)
+      ..writeByte(12)
+      ..write(obj.completedMiniGames)
+      ..writeByte(13)
+      ..write(obj.settings);
   }
 
   @override
@@ -144,5 +236,7 @@ class PlayerDataAdapter extends TypeAdapter<PlayerData> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is PlayerDataAdapter && runtimeType == other.runtimeType && typeId == other.typeId;
+      other is PlayerDataAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
 }
