@@ -1,7 +1,9 @@
 # Mundinho Divertido — Game Design Document (GDD)
 
-> **Versão:** 1.0  
-> **Última atualização:** 2026-05-11
+> **Versão:** 2.0  
+> **Última atualização:** 2026-05-12  
+> **CEO Founder:** JV  
+> **Assistente:** Jaime
 
 ---
 
@@ -15,10 +17,12 @@
 - **Progressão por descoberta**, não por competição
 
 ### Público-alvo
-- **Idade:** 4 a 8 anos
+- **Idade:** 6 a 15 anos
 - **Localização:** Brasil (português nativo, cultura brasileira)
-- **Dispositivo:** Celulares Android medianos (Android 8+, 2GB RAM)
-- **Contexto:** Jogos casuais, sessões de 5-20 minutos
+- **Dispositivo:** Celulares Android (Android 8+, 2GB RAM) e iOS (futuro)
+- **Contexto:** Jogos casuais a imersivos, sessões de 5-40 minutos
+- **Habilidades:** Leitura básica (6-7 anos) a fluente (12-15 anos). Interface híbrida: ícones + texto progressivo
+- **Tom:** Infantil para 6-8 anos, tween para 9-12, teen leve para 13-15. O jogo escala a complexidade conforme a idade do jogador.
 
 ---
 
@@ -49,11 +53,13 @@ EXPLORAR → INTERAGIR → COMPLETAR → RECOMPENSAR → DESBLOQUEAR → REPETIR
 
 ---
 
-## 🗺️ O Mundo — Cidade do Mundinho
+## 🗺️ Visão de Longo Prazo — Cidade do Mundinho
+
+> **Esta seção descreve a visão completa do mundo.** O MVP inicial terá apenas 1 bairro com 8-10 locais. Veja o Roadmap para o plano de expansão gradual.
 
 A cidade é dividida em **bairros temáticos**, cada um com identidade visual própria:
 
-### Bairros Planejados (Fase 1)
+### Bairros Planejados (Visão Completa — 12-24 meses)
 
 | Bairro | Tema | Locais principais |
 |--------|------|-------------------|
@@ -66,7 +72,7 @@ A cidade é dividida em **bairros temáticos**, cada um com identidade visual pr
 | **Aeroporto** | Transporte | Aeroporto, heliporto, torre de controle |
 | **Vila Religiosa** | Espiritualidade | Igreja, capela, centro comunitário |
 
-### Bairros Futuros (Expansões)
+### Bairros Futuros (Expansões — 24-36 meses)
 
 | Bairro | Tema |
 |--------|------|
@@ -74,6 +80,8 @@ A cidade é dividida em **bairros temáticos**, cada um com identidade visual pr
 | Serra Verde | Montanhas, camping, fazenda |
 | Vila Tecnológica | Robótica, espaço, ciência |
 | Bairro das Artes | Pintura, música, dança |
+| Bairro Noturno | Entretenimento noturno, cinema, shows |
+| Ilha Misteriosa | Exploração, tesouros, aventura |
 
 ---
 
@@ -242,20 +250,27 @@ A cidade é dividida em **bairros temáticos**, cada um com identidade visual pr
 
 ---
 
-## 🧪 Sistema de Missões (Visão Geral)
+## 🧪 Sistema de Missões (Visão Completa)
+
+> **Missões escalam em complexidade conforme idade:**
+> - **6-8 anos:** Ícones predominantes, texto curto, missões de 3 passos
+> - **9-12 anos:** Texto + ícones, missões de 5-7 passos, escolhas simples
+> - **13-15 anos:** Narração rica, missões de 8-12 passos, consequências, moralidade
 
 ### Tipos de Missões
 
-| Tipo | Descrição | Duração |
-|------|-----------|---------|
-| **Tutorial** | Primeiros passos com Tia Júlia | 5-10 min |
-| **História Principal** | Missões que desbloqueiam novos bairros | 10-20 min cada |
-| **Missões de Local** | Específicas de cada edifício | 3-10 min cada |
-| **Mini-jogos Avulsos** | Jogos rápidos em qualquer momento | 1-3 min cada |
-| **Missões Diárias** | 3 missões novas por dia | 2-5 min cada |
-| **Eventos Especiais** | Temporadas, feriados | variável |
+| Tipo | Descrição | Duração | Idade |
+|------|-----------|---------|-------|
+| **Tutorial** | Primeiros passos com Tia Júlia | 5-10 min | 6+ |
+| **História Principal** | Missões que desbloqueiam novos bairros | 10-25 min cada | 8+ |
+| **Missões de Local** | Específicas de cada edifício | 3-15 min cada | 6+ |
+| **Mini-jogos Avulsos** | Jogos rápidos em qualquer momento | 1-5 min cada | 6+ |
+| **Missões Diárias** | 3 missões novas por dia | 2-8 min cada | 6+ |
+| **Missões de Classe** | Desafios por faixa etária | 10-20 min | 9+ |
+| **Eventos Especiais** | Temporadas, feriados | variável | 6+ |
+| **Missões Secretas** | Descobertas explorando | 15-30 min | 10+ |
 
-### Exemplo de Missão Principal
+### Exemplo de Missão Principal (6-8 anos — Versão Simples)
 
 **"O Grande Bolo da Vovó Maria"**
 1. Vovó Maria pede ajuda para fazer um bolo
@@ -266,20 +281,30 @@ A cidade é dividida em **bairros temáticos**, cada um com identidade visual pr
 6. Entrega o bolo na prefeitura para a festa da cidade
 7. Recompensa: Estrela + receita no álbum + chapéu de cozinheiro
 
+### Exemplo de Missão Principal (12-15 anos — Versão Ousada)
+
+**"A Conspiração do Bolo Envenenado"**
+1. Vovó Maria encomenda um bolo para a festa do prefeito
+2. Na cozinha, alguém sabotou os ingredientes — o jogador encontra pistas
+3. Missão investigativa: interrogar NPCs, encontrar provas, deduzir culpado
+4. Escolha moral: expor o culpado publicamente ou dar uma lição privada
+5. Consequências: diferentes finais afetam relações com NPCs e desbloqueiam missões futuras
+6. Recompensa: Estrela + Badge "Detetive" + Nova missão secreta desbloqueada
+
 ---
 
 ## 🚫 O Que NÃO Terá no Jogo
 
 | ❌ Restrição | Motivo |
 |-------------|--------|
-| Violência | Público infantil |
-| Microtransações diretas | Somente remove-ads, nada que afete gameplay |
+| Violência gráfica | Público infantil/juvenil |
+| Microtransações diretas (loot boxes, gems) | Somente subscription e expansões |
 | Temporizadores de energia que forçam pagamento | Anti-frustração |
-| Texto denso/obrigatório | Crianças de 4 anos não leem bem |
-| Chat online com estranhos | Segurança infantil |
-| Anúncios interrompendo gameplay | Apenas entre sessões/menu |
-| Conteúdo assustador | Idade 4-8 anos |
-| Competição agressiva (PvP, ranking) | Foco em cooperação e exploração |
+| Chat online aberto com estranhos | Segurança infantil |
+| Anúncios de terceiros | Experiência premium (sem anúncios) |
+| Conteúdo assustador/terror | Idade 6-15 anos |
+| Competição agressiva (PvP, ranking público) | Foco em exploração e criatividade |
+| Compartilhamento de dados pessoais | LGPD / Privacidade |
 
 ---
 
