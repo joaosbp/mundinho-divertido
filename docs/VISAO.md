@@ -12,7 +12,7 @@
 
 **Mundinho Divertido** será o maior e mais amado jogo de mundo aberto infantojuvenil do Brasil. Uma cidade viva, expansível e interativa onde crianças e adolescentes de 6 a 15 anos exploram, aprendem, criam e se divertem em um universo 100% brasileiro.
 
-Não é apenas um jogo. É uma **plataforma de entretenimento educativo** que cresce com a criança, adaptando complexidade, narrativa e desafios conforme a idade do jogador.
+Não é apenas um jogo. É uma **plataforma de entretenimento educativo** que cresce com o jogador, adaptando complexidade, narrativa e desafios conforme sua maturidade e interesse.
 
 ---
 
@@ -115,23 +115,26 @@ Não é apenas um jogo. É uma **plataforma de entretenimento educativo** que cr
 
 ## 🧪 Missões por Faixa Etária (Visão)
 
-### 6-8 anos — Exploradores
+### Nível 1 — Exploradores (entrada)
 - Foco: Descoberta, cores, formas, números
 - Missões: 3-5 passos, ícones + texto curto
 - Mini-jogos: Memória, ordenação, cores, contagem
 - Narrativa: Simples, direta, recompensas frequentes
+- *Referência etária: ~6-8 anos, mas qualquer jogador pode começar aqui*
 
-### 9-12 anos — Aventureiros
+### Nível 2 — Aventureiros (intermediário)
 - Foco: Raciocínio lógico, geografia, história, ciências
 - Missões: 5-10 passos, escolhas simples, consequências
 - Mini-jogos: Puzzle, sequência, ritmo, experimentos
 - Narrativa: Histórias com início/meio/fim, personagens com arco
+- *Referência etária: ~9-12 anos, mas desbloqueado por progressão, não idade*
 
-### 13-15 anos — Detetives
+### Nível 3 — Detetives (avançado)
 - Foco: Pensamento crítico, moralidade, estratégia
 - Missões: 8-15 passos, investigação, múltiplos finais
 - Mini-jogos: Estratégia, simulação, gestão, programação leve
 - Narrativa: Mistérios, conspirações, dilemas morais, consequências permanentes
+- *Referência etária: ~13-15 anos, mas acessível a qualquer jogador que demonstre maturidade*
 
 ---
 

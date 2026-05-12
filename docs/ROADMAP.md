@@ -173,14 +173,17 @@
 ### FASE 4: Monetização e Soft Launch (Semanas 17-20)
 
 > *"Construir a máquina de receita enquanto ainda é pequeno."*
+> **📊 Métricas:** Ver [`METRICAS.md`](METRICAS.md) — KPIs e eventos de monetização.
+> **🔒 Conformidade:** Ver [`LGPD.md`](LGPD.md) — tela de consentimento, privacidade e COPPA.
 
 **Escopo:**
 - Implementar subscription (Google Play Billing)
 - 30 dias grátis
 - Painel dos pais completo
-- Analytics (Firebase, opt-in)
-- Crash reporting
+- Analytics (Firebase, **opt-in, desabilitado por padrão**)
+- Crash reporting (**opt-in**)
 - ASO (App Store Optimization)
+- Tela de consentimento parental (LGPD/COPPA)
 - Soft launch em mercado secundário (Portugal ou pequena cidade BR)
 
 | Semana | Tarefas |

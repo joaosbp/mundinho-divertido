@@ -453,6 +453,9 @@ MissionManager.register(M21NovaMissao());
 
 ## 🔒 Segurança e Privacidade
 
+> **📋 Documento completo:** [`LGPD.md`](LGPD.md) — conformidade LGPD, COPPA, privacidade e segurança infantil.
+> **📊 Documento complementar:** [`METRICAS.md`](METRICAS.md) — analytics opt-in e eventos de privacidade.
+
 ### Regras para Jogos Infantis (COPPA / LGPD)
 
 1. **Não coletar:**
@@ -460,21 +463,25 @@ MissionManager.register(M21NovaMissao());
    - Endereço, email, telefone
    - Fotos da criança
    - Localização precisa
+   - ID de advertising (GAID/IDFA)
 
-2. **Coleta permitida (anônima):**
+2. **Coleta permitida (anônima, opt-in):**
    - Estatísticas de gameplay (tempo, missões completadas)
    - Crash reports
    - Modelo do dispositivo (para otimização)
+   - **Analytics desabilitado por padrão** — exige consentimento verificável dos pais
 
 3. **Consentimento dos pais:**
    - Painel "Para Mães e Pais" requer senha
-   - Analytics desabilitado por padrão
-   - Anúncios só com consentimento
+   - Tela de consentimento no primeiro launch
+   - Analytics e crash reporting desabilitados por padrão
+   - Revogação possível a qualquer momento no painel
 
 4. **Armazenamento:**
-   - Tudo local no dispositivo
+   - Tudo local no dispositivo (padrão)
    - Sem conta obrigatória
    - Sem servidor de backend para gameplay
+   - Sync em nuvem apenas se habilitado pelo responsável (futuro)
 
 ---
 

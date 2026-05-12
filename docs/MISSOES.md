@@ -1,7 +1,8 @@
 # Mundinho Divertido — Sistema de Missões e Atividades Educativas
 
-> **Versão:** 1.0  
-> **Foco:** Aprendizado lúdico para crianças 4-8 anos
+> **Versão:** 2.0  
+> **Foco:** Aprendizado lúdico progressivo (referência etária: ~4-15 anos, mas progressão por maturidade, não idade)
+> **📜 Princípios:** Ver [`PREMISSAS.md`](PREMISSAS.md) — autonomia progressiva e zero frustração.
 
 ---
 

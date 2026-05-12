@@ -16,13 +16,15 @@
 - **Mini-jogos educativos** em cada local da cidade
 - **Progressão por descoberta**, não por competição
 
-### Público-alvo
-- **Idade:** 6 a 15 anos
+### Público-alvo (Referência)
+> **A faixa etária é referência de mercado, não regra rígida. O design segue os princípios de [`PREMISSAS.md`](PREMISSAS.md).**
+
+- **Referência etária:** 6 a 15 anos
 - **Localização:** Brasil (português nativo, cultura brasileira)
 - **Dispositivo:** Celulares Android (Android 8+, 2GB RAM) e iOS (futuro)
 - **Contexto:** Jogos casuais a imersivos, sessões de 5-40 minutos
-- **Habilidades:** Leitura básica (6-7 anos) a fluente (12-15 anos). Interface híbrida: ícones + texto progressivo
-- **Tom:** Infantil para 6-8 anos, tween para 9-12, teen leve para 13-15. O jogo escala a complexidade conforme a idade do jogador.
+- **Habilidades:** Leitura básica a fluente. Interface híbrida: ícones + texto progressivo
+- **Tom:** Escalável conforme maturidade do jogador, não idade cronológica. O jogo adapta complexidade, não exclui.
 
 ---
 

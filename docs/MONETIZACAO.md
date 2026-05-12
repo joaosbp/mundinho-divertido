@@ -201,6 +201,9 @@ Receita Ano 2+ (estimativa: R$ 300-500K):
 
 ## 🛡️ Conformidade e Transparência
 
+> **🔒 Documento completo:** [`LGPD.md`](LGPD.md) — conformidade LGPD, COPPA, privacidade e segurança infantil.
+> **📊 Documento complementar:** [`METRICAS.md`](METRICAS.md) — eventos de monetização e dashboard de receita.
+
 ### Google Play — Política de Família
 
 - ✅ App aprovado no programa "Designed for Families"
@@ -209,13 +212,18 @@ Receita Ano 2+ (estimativa: R$ 300-500K):
 - ✅ Compras protegidas por senha/autenticação biométrica
 - ✅ Política de cancelamento clara e fácil
 - ✅ Trial gratuito claramente comunicado
+- ✅ Consentimento parental verificável (COPPA)
+- ✅ Analytics opt-in, desabilitado por padrão
 
-### LGPD
+### LGPD / COPPA
 
-- Dados armazenados localmente (não em servidor, exceto sync opcional)
-- Analytics anônimo e opt-in
+- Dados armazenados localmente (padrão)
+- Analytics anônimo e **opt-in (desabilitado por padrão)**
+- Crash reporting **opt-in (desabilitado por padrão)**
 - Sem compartilhamento de dados com terceiros
 - Política de privacidade acessível e em português
+- Registro de operações na ANPD (planejado)
+- DPO designado (JV)
 
 ---
 

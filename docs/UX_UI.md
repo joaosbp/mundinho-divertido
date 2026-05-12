@@ -1,8 +1,8 @@
 # Mundinho Divertido — Diretrizes de UX/UI
 
 > **Versão:** 2.0
-> **Público-alvo:** 6 a 15 anos
-> **Princípio:** *"Interface que escala com a idade: simples para 6 anos, rica para 15."*
+> **Referência etária:** 6 a 15 anos (ver [`PREMISSAS.md`](PREMISSAS.md))
+> **Princípio:** *"Interface que escala com a maturidade do jogador: simples para quem começa, rica para quem avança."*
 
 ---
 
